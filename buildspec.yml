@@ -1,0 +1,20 @@
+version: 0.2
+
+env:
+  secrets-manager:
+    DOCKERHUB_PASSWORD: dockerhub/password
+    DOCKERHUB_USERNAME: dockerhub/username
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Docker Hub...
+      - docker login --username $DOCKERHUB_USERNAME --password $DOCKERHUB_PASSWORD
+  build:
+    commands:
+      - echo "Build started on `date` ($(git rev-parse HEAD | cut -c -8))"
+      - echo Building the Docker image...
+      - docker buildx bake --progress=plain --push
+  post_build:
+    commands:
+      - echo Build completed at `date`
