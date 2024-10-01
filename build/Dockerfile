@@ -10,7 +10,7 @@ FROM php:${PHP_VERSION}-${RUNTIME} AS production
 ARG MCRYPT_VERSION=
 
 RUN apt-get update \
-    && apt-get install -y libpng-dev libmcrypt-dev libmagickwand-dev libicu-dev libxml2-dev libzip-dev libfreetype-dev libicu-dev \
+    && apt-get install -y libpng-dev libmcrypt-dev libmagickwand-dev libicu-dev libxml2-dev libzip-dev libfreetype-dev libgd-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
