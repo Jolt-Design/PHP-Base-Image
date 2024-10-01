@@ -1,6 +1,6 @@
 variable "platforms" {
   // This is a string so it can be overwritten with env vars for testing
-  default = "linux/amd64,linux/arm64"
+  default = "linux/amd64"
 }
 
 variable "versions" {
