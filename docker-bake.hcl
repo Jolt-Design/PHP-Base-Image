@@ -17,7 +17,7 @@ variable "versions" {
 variable "runtimes" {
   default = [
     "apache",
-    "fpm",
+    // "fpm",
   ]
 }
 
