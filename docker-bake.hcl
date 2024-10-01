@@ -7,7 +7,7 @@ variable "platforms" {
 
 variable "versions" {
   default = [
-    // "7.4",
+    "7.4",
     "8.0",
     "8.1",
     "8.2",
@@ -23,6 +23,15 @@ variable "runtimes" {
 
 variable "default_runtime" {
   default = "apache"
+}
+
+variable "dependency_versions" {
+  default = {
+    "7.4" = {
+      xdebug = "3.1.6"
+      mcrypt = "1.0.4"
+    }
+  }
 }
 
 variable "image" {
@@ -46,6 +55,8 @@ target "php" {
   args = {
     PHP_VERSION = version
     RUNTIME = runtime
+    XDEBUG_VERSION = try(dependency_versions[version]["xdebug"], null)
+    MCRYPT_VERSION = try(dependency_versions[version]["mcrypt"], null)
   }
 
   platforms = platforms
