@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "docker buildx bake",
+    "build:remote": "sh bin/build-remote.sh",
     "postinstall": "husky",
     "push": "yarn build --push"
   },
