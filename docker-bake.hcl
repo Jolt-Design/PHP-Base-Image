@@ -1,8 +1,6 @@
 variable "platforms" {
-  default = [
-    "linux/amd64",
-    "linux/arm64",
-  ]
+  // This is a string so it can be overwritten with env vars for testing
+  default = "linux/amd64,linux/arm64"
 }
 
 variable "versions" {
@@ -59,7 +57,7 @@ target "php" {
     MCRYPT_VERSION = try(dependency_versions[version]["mcrypt"], null)
   }
 
-  platforms = platforms
+  platforms = split(",", platforms)
 
   target = dev ? "dev" : "production"
 
