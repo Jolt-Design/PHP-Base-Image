@@ -10,11 +10,12 @@ FROM php:${PHP_VERSION}-${RUNTIME} AS production
 ARG MCRYPT_VERSION=
 
 RUN apt-get update \
-    && apt-get install -y libpng-dev libmcrypt-dev libmagickwand-dev libicu-dev libxml2-dev libzip-dev \
+    && apt-get install -y libpng-dev libmcrypt-dev libmagickwand-dev libicu-dev libxml2-dev libzip-dev libfreetype-dev libicu-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install -j$(nproc) mysqli gd pdo_mysql opcache exif zip intl \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) mysqli gd pdo_mysql opcache exif zip intl \
     && pecl install mcrypt$([ "x${MCRYPT_VERSION}" != "x" ] && echo "-${MCRYPT_VERSION}") imagick \
     && pecl install -o -f redis \
     && docker-php-ext-enable redis mcrypt imagick \
