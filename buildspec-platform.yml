@@ -27,7 +27,7 @@ phases:
       - echo "Build started on `date` ($(git rev-parse HEAD | cut -c -8))"
       - echo Building the Docker image...
       - echo Using base image ${DH_REPO}/library/php
-      - docker buildx bake --builder=container-builder --progress=plain --build-arg=BASE_IMAGE=${DH_REPO}/library/php --push
+      - docker buildx bake --builder=container-builder --progress=plain --set 'php*.args.BASE_IMAGE'=${DH_REPO}/library/php --push
   post_build:
     commands:
       - echo Build completed at `date`
