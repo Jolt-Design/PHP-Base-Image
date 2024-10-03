@@ -5,6 +5,8 @@ env:
   secrets-manager:
     DOCKERHUB_PASSWORD: dockerhub/password
     DOCKERHUB_USERNAME: dockerhub/username
+  variables:
+    DOCKER_CLI_EXPERIMENTAL: enabled
 
 batch:
   fast-fail: true

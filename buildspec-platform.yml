@@ -1,6 +1,7 @@
 version: 0.2
 
 env:
+  shell: /bin/bash
   secrets-manager:
     DOCKERHUB_PASSWORD: dockerhub/password
     DOCKERHUB_USERNAME: dockerhub/username
