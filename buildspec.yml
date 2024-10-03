@@ -7,7 +7,7 @@ env:
     DOCKERHUB_USERNAME: dockerhub/username
 
 batch:
-  fast-fail: false
+  fast-fail: true
   build-graph:
     - identifier: amd64
       env:
