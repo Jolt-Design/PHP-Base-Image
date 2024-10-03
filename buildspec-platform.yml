@@ -15,12 +15,10 @@ phases:
       - chmod +x ~/.docker/cli-plugins/docker-buildx
       - docker run --privileged --rm tonistiigi/binfmt --install arm64 amd64
       - docker buildx create --name container-builder --driver docker-container --use --bootstrap
-  pre_build:
+  build:
     commands:
       - echo Logging in to Docker Hub...
       - docker login --username $DOCKERHUB_USERNAME --password $DOCKERHUB_PASSWORD
-  build:
-    commands:
       - echo "Build started on `date` ($(git rev-parse HEAD | cut -c -8))"
       - echo Building the Docker image...
       - docker buildx bake --builder=container-builder --progress=plain --push
