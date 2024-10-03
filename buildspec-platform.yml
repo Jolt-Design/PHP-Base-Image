@@ -10,7 +10,7 @@ phases:
     commands:
       - if [ -z ${AWS_ACCOUNT_ID+x} ]; then AWS_ACCOUNT_ID=$(aws sts get-caller-identity | jq -r .Account); fi
       - REGISTRY_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION:-$AWS_DEFAULT_REGION}.amazonaws.com/
-      - DH_REPO=${REGISTRY_URI}/docker-hub
+      - DH_REPO=${REGISTRY_URI}docker-hub
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${REGISTRY_URI}
 
       - export BUILDX_VERSION=$(curl --silent "https://api.github.com/repos/docker/buildx/releases/latest" | jq -r .tag_name)
