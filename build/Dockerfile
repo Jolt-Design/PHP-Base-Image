@@ -4,7 +4,10 @@ ARG PHP_VERSION=8.0
 # RUNTIME is the runtime to use, e.g. apache, fpm or cli. uses the php repo tag, e.g. FROM php-apache
 ARG RUNTIME=apache
 
-FROM php:${PHP_VERSION}-${RUNTIME} AS production
+# BASE_IMAGE is the image to use as a base. Can be used to override the base with a pull-through cache, for example.
+ARG BASE_IMAGE=php
+
+FROM ${BASE_IMAGE}:${PHP_VERSION}-${RUNTIME} AS production
 
 # MCRYPT_VERSION overrides the version of Mcrypt installed from PECL. Use this if your PHP version is too old for the most current version.
 ARG MCRYPT_VERSION=
