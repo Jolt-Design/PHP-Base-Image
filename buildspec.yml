@@ -15,6 +15,7 @@ batch:
         privileged-mode: true
         variables:
           platforms: linux/amd64
+          ARCH: amd64
       buildspec: buildspec-platform.yml
 
     - identifier: arm64
@@ -24,7 +25,8 @@ batch:
         compute-type: BUILD_GENERAL1_MEDIUM
         privileged-mode: true
         variables:
-          platforms: linux/amd64
+          platforms: linux/arm64
+          ARCH: arm64
       buildspec: buildspec-platform.yml
 
     - identifier: manifest
