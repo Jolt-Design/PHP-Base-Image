@@ -19,7 +19,7 @@ phases:
       - mv "buildx-$BUILDX_VERSION.linux-${ARCH:-amd64}" ~/.docker/cli-plugins/docker-buildx
       - chmod +x ~/.docker/cli-plugins/docker-buildx
       # - docker run --privileged --rm ${DH_REPO}/tonistiigi/binfmt --install arm64 amd64
-      - docker buildx create --name container-builder --driver docker-container --use --bootstrap
+      # - docker buildx create --name container-builder --driver docker-container --use --bootstrap
   build:
     commands:
       - echo Logging in to Docker Hub...
@@ -29,7 +29,8 @@ phases:
       - echo "Build started on `date` ($(git rev-parse HEAD | cut -c -8))"
       - echo Building the Docker image...
       - echo Using base image ${DH_REPO}/library/php
-      - docker buildx bake --builder=container-builder --progress=plain --set 'php*.args.BASE_IMAGE'=${DH_REPO}/library/php --push
+      # - docker buildx bake --builder=container-builder --progress=plain --set 'php*.args.BASE_IMAGE'=${DH_REPO}/library/php --push
+      - docker buildx bake --progress=plain --set 'php*.args.BASE_IMAGE'=477913164314.dkr.ecr.eu-west-1.amazonaws.com/docker-hub/library/php --push
   post_build:
     commands:
       - echo Build completed at `date`
