@@ -23,6 +23,11 @@ variable "default_runtime" {
   default = "apache"
 }
 
+// tag_suffix lets you optionally add a suffix to the image tag, e.g. passing tag_suffix="-v2" would generate tags like `joltdesign/php:8.0-v2` and `joltdesign/php:8.0-apache-v2`
+variable "tag_suffix" {
+  default = ""
+}
+
 variable "dependency_versions" {
   default = {
     "7.4" = {
@@ -62,7 +67,7 @@ target "php" {
   target = dev ? "dev" : "production"
 
   tags = concat(
-    ["${image}:${version}-${runtime}${dev ? "-dev": ""}"],
-    runtime == default_runtime ? ["${image}:${version}${dev ? "-dev": ""}"] : [],
+    ["${image}:${version}-${runtime}${dev ? "-dev": ""}${tag_suffix}"],
+    runtime == default_runtime ? ["${image}:${version}${dev ? "-dev": ""}${tag_suffix}"] : [],
   )
 }
