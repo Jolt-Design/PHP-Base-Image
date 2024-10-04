@@ -31,8 +31,8 @@ phases:
       - echo Building the Docker image...
       - echo Using base image ${DH_REPO}/library/php
       # - docker buildx bake --builder=container-builder --progress=plain --set 'php*.args.BASE_IMAGE'=${DH_REPO}/library/php --push
-      # - docker buildx bake --progress=plain --set 'php*.args.BASE_IMAGE'=477913164314.dkr.ecr.eu-west-1.amazonaws.com/docker-hub/library/php --push
-      - docker buildx bake --provenance=false --progress=plain --push
+      - docker buildx bake --provenance=false --progress=plain --set 'php*.args.BASE_IMAGE'=${DH_REPO}/library/php --push
+      # - docker buildx bake --provenance=false --progress=plain --push
   post_build:
     commands:
       - echo Build completed at `date`
