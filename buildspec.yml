@@ -18,6 +18,7 @@ batch:
         variables:
           platforms: linux/amd64
           ARCH: amd64
+          tag_suffix: -amd64
       buildspec: buildspec-platform.yml
 
     - identifier: arm64
@@ -29,6 +30,7 @@ batch:
         variables:
           platforms: linux/arm64
           ARCH: arm64
+          tag_suffix: -arm64
       buildspec: buildspec-platform.yml
 
     - identifier: manifest
