@@ -13,7 +13,7 @@ FROM ${BASE_IMAGE}:${PHP_VERSION}-${RUNTIME} AS production
 ARG MCRYPT_VERSION=
 
 RUN apt-get update \
-    && apt-get install -y libpng-dev libmcrypt-dev libmagickwand-dev libicu-dev libxml2-dev libzip-dev libfreetype-dev libgd-dev \
+    && apt-get install -y libpng-dev libmcrypt-dev libmagickwand-dev libicu-dev libxml2-dev libzip-dev libfreetype-dev libgd-dev unzip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
