@@ -66,6 +66,7 @@ target "php" {
     RUNTIME = runtime
     XDEBUG_VERSION = try(dependency_versions[version]["xdebug"], null)
     MCRYPT_VERSION = try(dependency_versions[version]["mcrypt"], null)
+    IMAGICK_VERSION = try(dependency_versions[version]["imagick"], null)
   }
 
   platforms = split(",", platforms)

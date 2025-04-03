@@ -12,6 +12,9 @@ FROM ${BASE_IMAGE}:${PHP_VERSION}-${RUNTIME} AS production
 # MCRYPT_VERSION overrides the version of Mcrypt installed from PECL. Use this if your PHP version is too old for the most current version. Use "disabled" to completely disable Mcyrpt.
 ARG MCRYPT_VERSION=
 
+# MCRYPT_VERSION overrides the version of Imagemagick installed from PECL. Use this if your PHP version is too old for the most current version.
+ARG IMAGICK_VERSION=
+
 RUN apt-get update \
     && apt-get install -y libpng-dev $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo libmcrypt-dev) libmagickwand-dev libicu-dev libxml2-dev libzip-dev libfreetype-dev libgd-dev unzip \
     && apt-get clean \
@@ -19,7 +22,7 @@ RUN apt-get update \
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) mysqli gd pdo_mysql opcache exif zip intl \
-    && pecl install $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt$([ "x${MCRYPT_VERSION}" != "x" ] && echo "-${MCRYPT_VERSION}")) imagick \
+    && pecl install $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt$([ "x${MCRYPT_VERSION}" != "x" ] && echo "-${MCRYPT_VERSION}")) imagick$([ "x${IMAGICK_VERSION}" != "x" ] && echo "-${IMAGICK_VERSION}") \
     && pecl install -o -f redis \
     && docker-php-ext-enable redis $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt) imagick \
     && rm -rf /tmp/pear \
