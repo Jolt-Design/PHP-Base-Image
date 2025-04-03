@@ -10,6 +10,7 @@ variable "versions" {
     "8.1",
     "8.2",
     "8.3",
+    "8.4",
   ]
 }
 
@@ -34,6 +35,10 @@ variable "dependency_versions" {
     "7.4" = {
       xdebug = "3.1.6"
       mcrypt = "1.0.4"
+    }
+
+    "8.4" = {
+      mcrypt = "disabled"
     }
   }
 }
