@@ -35,6 +35,7 @@ variable "dependency_versions" {
     "7.4" = {
       xdebug = "3.1.6"
       mcrypt = "1.0.4"
+      imagick = "3.5.1"
     }
 
     "8.4" = {
