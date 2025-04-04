@@ -40,6 +40,7 @@ variable "dependency_versions" {
 
     "8.4" = {
       mcrypt = "disabled"
+      imagick = "3.8.0RC2"
     }
   }
 }
