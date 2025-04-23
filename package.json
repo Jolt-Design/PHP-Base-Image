@@ -1,7 +1,7 @@
 {
   "name": "@joltdesign/docker-php-base",
   "version": "1.0.0",
-  "repository": "git@bitbucket.org:joltdesignltd/docker-php-base.git",
+  "repository": "git@github.com:Jolt-Design/PHP-Base-Image.git",
   "author": "Jolt Design <studio@joltdesign.co.uk>",
   "license": "None",
   "private": true,
