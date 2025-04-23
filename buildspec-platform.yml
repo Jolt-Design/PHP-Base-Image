@@ -15,7 +15,7 @@ phases:
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${REGISTRY_URI}
 
       - export BUILDX_VERSION=$(curl --silent "https://api.github.com/repos/docker/buildx/releases/latest" | jq -r .tag_name)
-      - curl -JLO "https://github.com/docker/buildx/releases/download/$BUILDX_VERSION/buildx-$BUILDX_VERSION.linux-${ARCH:-amd64}"
+      - curl -JLO --retry 5 --retry-max-time 120 "https://github.com/docker/buildx/releases/download/$BUILDX_VERSION/buildx-$BUILDX_VERSION.linux-${ARCH:-amd64}"
       - mkdir -p ~/.docker/cli-plugins
       - mv "buildx-$BUILDX_VERSION.linux-${ARCH:-amd64}" ~/.docker/cli-plugins/docker-buildx
       - chmod +x ~/.docker/cli-plugins/docker-buildx
