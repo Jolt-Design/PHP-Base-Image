@@ -16,6 +16,7 @@ ARG MCRYPT_VERSION=
 ARG IMAGICK_VERSION=
 
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y libpng-dev $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo libmcrypt-dev) libmagickwand-dev libicu-dev libxml2-dev libzip-dev libfreetype-dev libgd-dev unzip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
