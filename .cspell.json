@@ -1,0 +1,58 @@
+{
+  /**
+   * Config file for cSpell
+   *
+   * See: https://www.npmjs.com/package/cspell
+   */
+
+  // Version of the setting file. Always 0.1
+  "version": "0.2",
+  // language - current active spelling language
+  "language": "en-GB",
+  // dictionaries - a list of dictionaries to use
+  "dictionaries": [
+    "aws",
+    "bash",
+    "companies",
+    "css",
+    "docker",
+    "fonts",
+    "fullstack",
+    "git",
+    "html-symbol-entities",
+    "html",
+    "misc",
+    "networking-terms",
+    "node",
+    "npm",
+    "php",
+    "public-licenses",
+    "softwareTerms",
+    "sql",
+    "terraform",
+    "typescript",
+    "web-services",
+  ],
+  // words - list of words to be always considered correct
+  "words": [
+    "admin",
+    "buildx",
+    "gd",
+    "imagemagick",
+    "imagick",
+    "lib",
+    "libgd",
+    "magickwand",
+  ],
+  "ignoreWords": [
+    "dismod",
+    "enmod",
+    "xdisabled",
+  ],
+  // flagWords - list of words to be always considered incorrect
+  // This is useful for offensive words and common spelling errors.
+  // For example "hte" should be "the"
+  "flagWords": [],
+  // allowCompoundWords - allow multiple words smashed together, like "stringlength"
+  "allowCompoundWords": true
+}

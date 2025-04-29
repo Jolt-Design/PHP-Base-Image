@@ -9,7 +9,7 @@ ARG BASE_IMAGE=php
 
 FROM ${BASE_IMAGE}:${PHP_VERSION}-${RUNTIME} AS production
 
-# MCRYPT_VERSION overrides the version of Mcrypt installed from PECL. Use this if your PHP version is too old for the most current version. Use "disabled" to completely disable Mcyrpt.
+# MCRYPT_VERSION overrides the version of Mcrypt installed from PECL. Use this if your PHP version is too old for the most current version. Use "disabled" to completely disable Mcrypt.
 ARG MCRYPT_VERSION=
 
 # MCRYPT_VERSION overrides the version of Imagemagick installed from PECL. Use this if your PHP version is too old for the most current version.
