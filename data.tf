@@ -2,7 +2,7 @@ data "terraform_remote_state" "s3" {
   backend = "s3"
 
   config = {
-    bucket = "shared-terraform.joltdesign.joltrouter.net"
+    bucket = "terraform.shared-infrastructure.joltrouter.net"
     key    = "network/terraform.tfstate"
     region = "eu-west-1"
   }
