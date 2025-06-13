@@ -1,1 +1,1 @@
-npx --yes corepack yarn jira-prepare-commit-msg $1
+npx --yes --prefer-offline jira-prepare-commit-msg $1
