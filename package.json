@@ -10,12 +10,13 @@
     "ignoredBranchesPattern": "^dependabot/"
   },
   "scripts": {
-    "build": "docker buildx bake",
-    "build:remote": "sh bin/build-remote.sh",
+    "build": "jolt cmd '{cmd:docker}' buildx bake",
+    "build:remote": "jolt aws codebuild start --batch '{tf:codebuild_project_name}'",
     "postinstall": "npx --yes --prefer-offline husky",
     "push": "run build --push"
   },
   "devDependencies": {
+    "@joltdesign/scripts": "^0.12.0",
     "npm-run-all": "^4.1.5"
   },
   "packageManager": "yarn@4.9.2+sha512.1fc009bc09d13cfd0e19efa44cbfc2b9cf6ca61482725eb35bbc5e257e093ebf4130db6dfe15d604ff4b79efd8e1e8e99b25fa7d0a6197c9f9826358d4d65c3c"
