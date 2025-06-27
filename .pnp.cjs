@@ -29,7 +29,7 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./",\
         "packageDependencies": [\
           ["@joltdesign/docker-php-base", "workspace:."],\
-          ["@joltdesign/scripts", "npm:0.12.0"],\
+          ["@joltdesign/scripts", "npm:0.12.4"],\
           ["npm-run-all", "npm:4.1.5"]\
         ],\
         "linkType": "SOFT"\
@@ -40,19 +40,19 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./",\
         "packageDependencies": [\
           ["@joltdesign/docker-php-base", "workspace:."],\
-          ["@joltdesign/scripts", "npm:0.12.0"],\
+          ["@joltdesign/scripts", "npm:0.12.4"],\
           ["npm-run-all", "npm:4.1.5"]\
         ],\
         "linkType": "SOFT"\
       }]\
     ]],\
     ["@joltdesign/scripts", [\
-      ["npm:0.12.0", {\
-        "packageLocation": "./.yarn/cache/@joltdesign-scripts-npm-0.12.0-afd22193e2-05874eeb15.zip/node_modules/@joltdesign/scripts/",\
+      ["npm:0.12.4", {\
+        "packageLocation": "./.yarn/cache/@joltdesign-scripts-npm-0.12.4-798d098b9a-3c2d2525a7.zip/node_modules/@joltdesign/scripts/",\
         "packageDependencies": [\
-          ["@joltdesign/scripts", "npm:0.12.0"],\
+          ["@joltdesign/scripts", "npm:0.12.4"],\
           ["ansis", "npm:4.1.0"],\
-          ["clipanion", "virtual:afd22193e2d2daf3fea9baec33fefc6b7eef0653bef51367dc179f419b10050e1816397938d70ae3f8b79cf2bea6ea5cc369ed0e44b643f6b4bc255523b93d3b#npm:4.0.0-rc.4"],\
+          ["clipanion", "virtual:798d098b9aaa8617ce100e4cd57fa050c8c4a6695a6cd62bcdd1d004bd4ae363c41df1a8fcc33d025facd0549367c1d94580353cd4a9adaeb00272b8752c3819#npm:4.0.0-rc.4"],\
           ["dotenv", "npm:16.5.0"],\
           ["execa", "npm:9.6.0"],\
           ["shelljs", "npm:0.10.0"],\
@@ -260,11 +260,11 @@ const RAW_RUNTIME_STATE =
         ],\
         "linkType": "SOFT"\
       }],\
-      ["virtual:afd22193e2d2daf3fea9baec33fefc6b7eef0653bef51367dc179f419b10050e1816397938d70ae3f8b79cf2bea6ea5cc369ed0e44b643f6b4bc255523b93d3b#npm:4.0.0-rc.4", {\
-        "packageLocation": "./.yarn/__virtual__/clipanion-virtual-52f2841eda/0/cache/clipanion-npm-4.0.0-rc.4-40deb7eb3b-047b415b59.zip/node_modules/clipanion/",\
+      ["virtual:798d098b9aaa8617ce100e4cd57fa050c8c4a6695a6cd62bcdd1d004bd4ae363c41df1a8fcc33d025facd0549367c1d94580353cd4a9adaeb00272b8752c3819#npm:4.0.0-rc.4", {\
+        "packageLocation": "./.yarn/__virtual__/clipanion-virtual-4a084ad217/0/cache/clipanion-npm-4.0.0-rc.4-40deb7eb3b-047b415b59.zip/node_modules/clipanion/",\
         "packageDependencies": [\
           ["@types/typanion", null],\
-          ["clipanion", "virtual:afd22193e2d2daf3fea9baec33fefc6b7eef0653bef51367dc179f419b10050e1816397938d70ae3f8b79cf2bea6ea5cc369ed0e44b643f6b4bc255523b93d3b#npm:4.0.0-rc.4"],\
+          ["clipanion", "virtual:798d098b9aaa8617ce100e4cd57fa050c8c4a6695a6cd62bcdd1d004bd4ae363c41df1a8fcc33d025facd0549367c1d94580353cd4a9adaeb00272b8752c3819#npm:4.0.0-rc.4"],\
           ["typanion", "npm:3.14.0"]\
         ],\
         "packagePeers": [\
