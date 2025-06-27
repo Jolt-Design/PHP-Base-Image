@@ -29,9 +29,10 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && rm -rf /tmp/pear \
     && docker-php-source delete
 
-RUN a2enmod alias ext_filter headers rewrite
+RUN a2enmod alias ext_filter headers rewrite remoteip
 
 COPY ./php-conf.d/ /usr/local/etc/php/conf.d
+COPY ./apache-conf.d/ /etc/apache2/conf-enabled
 
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 

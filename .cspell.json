@@ -47,6 +47,7 @@
   "ignoreWords": [
     "dismod",
     "enmod",
+    "remoteip",
     "xdisabled",
   ],
   // flagWords - list of words to be always considered incorrect
