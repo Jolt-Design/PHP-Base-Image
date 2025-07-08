@@ -14,8 +14,8 @@ __metadata:
   linkType: soft
 
 "@joltdesign/scripts@npm:^0.14.0":
-  version: 0.14.0
-  resolution: "@joltdesign/scripts@npm:0.14.0"
+  version: 0.14.1
+  resolution: "@joltdesign/scripts@npm:0.14.1"
   dependencies:
     ansis: "npm:^4.1.0"
     clipanion: "npm:^4.0.0-rc.4"
@@ -25,7 +25,7 @@ __metadata:
     which: "npm:^5.0.0"
   bin:
     jolt: ./dist/cli.js
-  checksum: 10c0/38757c9643e22223a7f3e3a80c05eb3ed63049a15a6cd951e17f57366c876fbb941368be8331d89c3295101d59c5022532dd308777b57abfaf702a9c2b8dcaee
+  checksum: 10c0/90b3fc949c75a5bca2368787f160a182648dce9712a945515d735216425b6ad392d0f3e0c97ff18a159e6cf0e82027c0d77fc316e4bf73fc349db04f5d60ecce
   languageName: node
   linkType: hard
 
