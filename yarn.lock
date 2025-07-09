@@ -9,11 +9,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@joltdesign/docker-php-base@workspace:."
   dependencies:
-    "@joltdesign/scripts": "npm:^0.14.0"
+    "@joltdesign/scripts": "npm:^0.14.1"
   languageName: unknown
   linkType: soft
 
-"@joltdesign/scripts@npm:^0.14.0":
+"@joltdesign/scripts@npm:^0.14.1":
   version: 0.14.1
   resolution: "@joltdesign/scripts@npm:0.14.1"
   dependencies:
