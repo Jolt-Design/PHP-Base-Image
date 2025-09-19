@@ -9,24 +9,26 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@joltdesign/docker-php-base@workspace:."
   dependencies:
-    "@joltdesign/scripts": "npm:^0.19.3"
+    "@joltdesign/scripts": "npm:^0.20.0"
   languageName: unknown
   linkType: soft
 
-"@joltdesign/scripts@npm:^0.19.3":
-  version: 0.19.3
-  resolution: "@joltdesign/scripts@npm:0.19.3"
+"@joltdesign/scripts@npm:^0.20.0":
+  version: 0.20.0
+  resolution: "@joltdesign/scripts@npm:0.20.0"
   dependencies:
     ansis: "npm:^4.1.0"
+    change-case: "npm:^5.4.4"
     clipanion: "npm:^4.0.0-rc.4"
     dotenv: "npm:^17.2.2"
     execa: "npm:^9.6.0"
     object-resolve-path: "npm:^1.1.1"
     typanion: "npm:^3.14.0"
     which: "npm:^5.0.0"
+    zod: "npm:^4.1.9"
   bin:
     jolt: ./dist/cli.js
-  checksum: 10c0/82d64cc01d55da78605690f417c5c30c56711893c3d82821dd0e12ee792445bd36091b14684a9ce0f79336e23ecd51276bcd0bebfd7d892ac82cd7caeff02b08
+  checksum: 10c0/82b8bed2e43bacb11ed75cd30f91f6f024edc09d8b069b66af133fddbc7a556d5c9d53ad7cbd4e7ee4720ed7e242d5aba5ee2ca6a07a5dd30271a95b47291d22
   languageName: node
   linkType: hard
 
@@ -48,6 +50,13 @@ __metadata:
   version: 4.1.0
   resolution: "ansis@npm:4.1.0"
   checksum: 10c0/df62d017a7791babdaf45b93f930d2cfd6d1dab5568b610735c11434c9a5ef8f513740e7cfd80bcbc3530fc8bd892b88f8476f26621efc251230e53cbd1a2c24
+  languageName: node
+  linkType: hard
+
+"change-case@npm:^5.4.4":
+  version: 5.4.4
+  resolution: "change-case@npm:5.4.4"
+  checksum: 10c0/2a9c2b9c9ad6ab2491105aaf506db1a9acaf543a18967798dcce20926c6a173aa63266cb6189f3086e3c14bf7ae1f8ea4f96ecc466fcd582310efa00372f3734
   languageName: node
   linkType: hard
 
@@ -278,5 +287,12 @@ __metadata:
   version: 2.1.2
   resolution: "yoctocolors@npm:2.1.2"
   checksum: 10c0/b220f30f53ebc2167330c3adc86a3c7f158bcba0236f6c67e25644c3188e2571a6014ffc1321943bb619460259d3d27eb4c9cc58c2d884c1b195805883ec7066
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.1.9":
+  version: 4.1.9
+  resolution: "zod@npm:4.1.9"
+  checksum: 10c0/8aa2f240a3ccd153feb061f8ef17b9a4c2bcc98f1146c16655f8623c628c7376006fb70c5e1adcb655fc3585b848435eec307c5bf690cfedbdb220c567e62075
   languageName: node
   linkType: hard
