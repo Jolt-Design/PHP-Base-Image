@@ -27,9 +27,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Read PHP versions
         id: versions
-        run: echo "versions=$(jq -r '.[\"php-versions\"] | join(",")' versions.json)" >> $GITHUB_OUTPUT
+        run: echo "versions=$(jq -r '.["php-versions"] | join(",")' versions.json)" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/bake-action@v6
