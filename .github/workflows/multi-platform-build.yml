@@ -63,10 +63,20 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/digests
           # Try to extract digests from build metadata first (works if bake emitted them)
+          # prepare a per-platform mapping file so the merge job can pick the right digests
+          MAPFILE="/tmp/digests/mapping-${PLATFORM_PAIR}.txt"
+          : > "$MAPFILE"
+
           if echo '${{ steps.build.outputs.metadata }}' | jq -e '. | length > 0' >/dev/null 2>&1; then
-            echo '${{ steps.build.outputs.metadata }}' | jq -r 'to_entries[] | select(.value."containerimage.digest") | .value."containerimage.digest"' | while read -r digest; do
+            # Try to extract name (tag) and digest from metadata entries
+            echo '${{ steps.build.outputs.metadata }}' | jq -r 'to_entries[] | select(.value."containerimage.digest") | "\(.value."containerimage.name") \(.value."containerimage.digest")"' | while read -r name digest; do
               [ -n "$digest" ] || continue
+              # create digest file for compatibility
               touch "/tmp/digests/${digest#sha256:}"
+              # If name contains a tag (has ':'), record mapping name -> digest. If it's canonical (contains '@'), skip mapping.
+              if [[ "$name" == *":"* && "$name" != *"@"* ]]; then
+                echo "$name $digest" >> "$MAPFILE"
+              fi
             done
           fi
 
@@ -109,12 +119,15 @@ jobs:
                       jq -r --arg p1 "$pair1" --arg p2 "$pair2" '.manifests[] | select(((.platform.os//"") + "-" + (.platform.architecture//"") == $p1) or ((.platform.os//"") + "-" + (.platform.architecture//"") + "-" + (.platform.variant//"") == $p2)) | .digest' /tmp/manifest.json | while read -r digest; do
                         [ -n "$digest" ] || continue
                         touch "/tmp/digests/${digest#sha256:}"
+                        # Record mapping for this tag
+                        echo "$tag $digest" >> "$MAPFILE"
                       done
                     else
                       # Single-arch: try top-level digest
                       jq -r '.digest // empty' /tmp/manifest.json | while read -r digest; do
                         [ -n "$digest" ] || continue
                         touch "/tmp/digests/${digest#sha256:}"
+                        echo "$tag $digest" >> "$MAPFILE"
                       done
                     fi
                   else
@@ -165,8 +178,24 @@ jobs:
               for suffix in "" "-dev"; do
                 tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
                 echo "Creating manifest for $tag"
-                docker buildx imagetools create -t "$tag" \
-                  $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+                # Collect digests for this tag from all mapping files
+                digests=()
+                for map in $(ls mapping-*.txt 2>/dev/null || true); do
+                  while read -r line; do
+                    t=$(echo "$line" | awk '{print $1}')
+                    d=$(echo "$line" | awk '{print $2}')
+                    if [ "$t" = "$tag" ]; then
+                      digests+=("${{ env.REGISTRY_IMAGE }}@${d}")
+                    fi
+                  done < "$map"
+                done
+
+                if [ ${#digests[@]} -eq 0 ]; then
+                  echo "Warning: no digests found for $tag; skipping"
+                  continue
+                fi
+
+                docker buildx imagetools create -t "$tag" "${digests[@]}"
               done
             done
           done
