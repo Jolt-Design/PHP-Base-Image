@@ -56,8 +56,6 @@ jobs:
         with:
           set: |
             *.platform=${{ matrix.platform }}
-            # Use normal push; do not force push-by-digest which can cause Docker
-            # Hub to reject pushing tagged refs by digest.
             *.output=type=image,push=true
 
       - name: Export digest
