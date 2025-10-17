@@ -85,13 +85,42 @@ jobs:
                   echo "Inspecting $tag for platform $PLATFORM_PAIR"
                   # imagetools inspect returns manifest list JSON; select the digest for the matching platform
                   # Note: buildx imagetools is available after setup-buildx-action
-                  if docker buildx imagetools inspect --raw "$tag" >/tmp/manifest.json 2>/dev/null; then
-                    jq -r --arg pair "$PLATFORM_PAIR" '.manifests[] | select((.platform.os//"") + "-" + (.platform.architecture//"") == $pair) | .digest' /tmp/manifest.json | while read -r digest; do
-                      [ -n "$digest" ] || continue
-                      touch "/tmp/digests/${digest#sha256:}"
-                    done
+                  # Try up to 4 times with backoff in case the registry needs a moment to index the manifest
+                  success=0
+                  for attempt in 0 1 2 3; do
+                    if docker buildx imagetools inspect --raw "$tag" >/tmp/manifest.json 2>/dev/null; then
+                      success=1
+                      break
+                    fi
+                    sleep $((2 ** attempt))
+                  done
+
+                  if [ "$success" -eq 1 ]; then
+                    # Prefer per-manifest entries (multi-arch); also accept top-level digest for single-arch pushes
+                    # Build possible match strings: os-arch and os-arch-variant
+                    os_arch=$(jq -r '.manifests[0].platform.os // ""' /tmp/manifest.json 2>/dev/null || true)
+                    arch=$(jq -r '.manifests[0].platform.architecture // ""' /tmp/manifest.json 2>/dev/null || true)
+                    variant=$(jq -r '.manifests[0].platform.variant // ""' /tmp/manifest.json 2>/dev/null || true)
+                    # Fallback: determine pair from PLATFORM_PAIR
+                    pair1="$PLATFORM_PAIR"
+                    pair2="$PLATFORM_PAIR-$variant"
+
+                    # Extract manifests if present
+                    if jq -e '.manifests' /tmp/manifest.json >/dev/null 2>&1; then
+                      # Match os-arch-variant and os-arch
+                      jq -r --arg p1 "$pair1" --arg p2 "$pair2" '.manifests[] | select(((.platform.os//"") + "-" + (.platform.architecture//"") == $p1) or ((.platform.os//"") + "-" + (.platform.architecture//"") + "-" + (.platform.variant//"") == $p2)) | .digest' /tmp/manifest.json | while read -r digest; do
+                        [ -n "$digest" ] || continue
+                        touch "/tmp/digests/${digest#sha256:}"
+                      done
+                    else
+                      # Single-arch: try top-level digest
+                      jq -r '.digest // empty' /tmp/manifest.json | while read -r digest; do
+                        [ -n "$digest" ] || continue
+                        touch "/tmp/digests/${digest#sha256:}"
+                      done
+                    fi
                   else
-                    echo "Warning: failed to inspect $tag — it may not exist yet"
+                    echo "Warning: failed to inspect $tag after retries — it may not exist yet"
                   fi
                 done
               done
