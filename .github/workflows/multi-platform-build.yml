@@ -99,6 +99,8 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      EXPECTED_PLATFORMS: 2
     steps:
       - name: Download digests and mappings
         uses: actions/download-artifact@v5
@@ -138,6 +140,29 @@ jobs:
               if [ -f "$COMBINED.tmp" ]; then mv "$COMBINED.tmp" "$COMBINED"; fi
             done
           done
+
+          # Verify combined mapping contains expected number of platform digests per tag
+          missing=()
+          for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
+            for runtime in "" "-apache"; do
+              for suffix in "" "-dev"; do
+                tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                count=$(jq -r --arg t "$tag" '.[$t] | length // 0' "$COMBINED")
+                if [ "$count" -lt "${EXPECTED_PLATFORMS}" ]; then
+                  missing+=("$tag:$count")
+                fi
+              done
+            done
+          done
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Error: combined mapping missing digests for some tags (expected ${EXPECTED_PLATFORMS}):"
+            for m in "${missing[@]}"; do
+              echo "  $m"
+            done
+            echo "Failing merge to avoid creating incomplete manifests."
+            exit 1
+          fi
 
           # Create manifests for all PHP versions and variants using combined mapping
           for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
