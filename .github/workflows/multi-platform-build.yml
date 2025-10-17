@@ -58,86 +58,35 @@ jobs:
             *.platform=${{ matrix.platform }}
             *.output=type=image,push=true
 
-      - name: Export digest
+      - name: Export digest and mapping
         run: |
           set -euo pipefail
           mkdir -p /tmp/digests
-          # Try to extract digests from build metadata first (works if bake emitted them)
-          # prepare a per-platform mapping file so the merge job can pick the right digests
-          MAPFILE="/tmp/digests/mapping-${PLATFORM_PAIR}.txt"
-          : > "$MAPFILE"
+          # Mapping JSON path (per-platform)
+          MAPJSON="/tmp/digests/mapping-${PLATFORM_PAIR}.json"
+          # Build mapping from bake metadata: tag -> digest
+          echo '{}' > "$MAPJSON"
 
           if echo '${{ steps.build.outputs.metadata }}' | jq -e '. | length > 0' >/dev/null 2>&1; then
-            # Try to extract name (tag) and digest from metadata entries
-            echo '${{ steps.build.outputs.metadata }}' | jq -r 'to_entries[] | select(.value."containerimage.digest") | "\(.value."containerimage.name") \(.value."containerimage.digest")"' | while read -r name digest; do
-              [ -n "$digest" ] || continue
-              # create digest file for compatibility
-              touch "/tmp/digests/${digest#sha256:}"
-              # If name contains a tag (has ':'), record mapping name -> digest. If it's canonical (contains '@'), skip mapping.
-              if [[ "$name" == *":"* && "$name" != *"@"* ]]; then
-                echo "$name $digest" >> "$MAPFILE"
-              fi
-            done
-          fi
-
-          # If no mapping entries were written from metadata, fall back to querying the registry
-          # for this job's platform. We check the per-platform MAPFILE to decide.
-          if [ ! -s "$MAPFILE" ]; then
-            echo "No digests found in bake metadata — querying registry for per-platform digests"
-            # PLATFORM_PAIR is set in Prepare step (e.g. linux-amd64)
-            PLATFORM_PAIR=${PLATFORM_PAIR}
-            # For each version/runtime/suffix combination, inspect the pushed tag and pick the manifest for this platform
-            for version in $(jq -r '.["php-versions"][]' versions.json); do
-              for runtime in "" "-apache"; do
-                for suffix in "" "-dev"; do
-                  tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
-                  echo "Inspecting $tag for platform $PLATFORM_PAIR"
-                  # imagetools inspect returns manifest list JSON; select the digest for the matching platform
-                  # Note: buildx imagetools is available after setup-buildx-action
-                  # Try up to 4 times with backoff in case the registry needs a moment to index the manifest
-                  success=0
-                  for attempt in 0 1 2 3; do
-                    if docker buildx imagetools inspect --raw "$tag" >/tmp/manifest.json 2>/dev/null; then
-                      success=1
-                      break
-                    fi
-                    sleep $((2 ** attempt))
-                  done
-
-                  if [ "$success" -eq 1 ]; then
-                    # Prefer per-manifest entries (multi-arch); also accept top-level digest for single-arch pushes
-                    # Build possible match strings: os-arch and os-arch-variant
-                    os_arch=$(jq -r '.manifests[0].platform.os // ""' /tmp/manifest.json 2>/dev/null || true)
-                    arch=$(jq -r '.manifests[0].platform.architecture // ""' /tmp/manifest.json 2>/dev/null || true)
-                    variant=$(jq -r '.manifests[0].platform.variant // ""' /tmp/manifest.json 2>/dev/null || true)
-                    # Fallback: determine pair from PLATFORM_PAIR
-                    pair1="$PLATFORM_PAIR"
-                    pair2="$PLATFORM_PAIR-$variant"
-
-                    # Extract manifests if present
-                    if jq -e '.manifests' /tmp/manifest.json >/dev/null 2>&1; then
-                      # Match os-arch-variant and os-arch
-                      jq -r --arg p1 "$pair1" --arg p2 "$pair2" '.manifests[] | select(((.platform.os//"") + "-" + (.platform.architecture//"") == $p1) or ((.platform.os//"") + "-" + (.platform.architecture//"") + "-" + (.platform.variant//"") == $p2)) | .digest' /tmp/manifest.json | while read -r digest; do
-                        [ -n "$digest" ] || continue
-                        touch "/tmp/digests/${digest#sha256:}"
-                        # Record mapping for this tag
-                        echo "$tag $digest" >> "$MAPFILE"
-                      done
-                    else
-                      # Single-arch: try top-level digest
-                      jq -r '.digest // empty' /tmp/manifest.json | while read -r digest; do
-                        [ -n "$digest" ] || continue
-                        touch "/tmp/digests/${digest#sha256:}"
-                        echo "$tag $digest" >> "$MAPFILE"
-                      done
-                    fi
-                  else
-                    echo "Warning: failed to inspect $tag after retries — it may not exist yet"
-                  fi
-                done
+            # Create an array of {name, digest} objects for entries that include containerimage.digest
+            echo '${{ steps.build.outputs.metadata }}' | jq -c '[ to_entries[] | select(.value."containerimage.digest") | {name: .value."containerimage.name", digest: .value."containerimage.digest"} ]' > /tmp/_meta_array.json
+            if [ -s /tmp/_meta_array.json ]; then
+              # For each element, if name contains a tag (':' and not '@'), add to mapping
+              jq -c '.[]' /tmp/_meta_array.json | while read -r obj; do
+                name=$(echo "$obj" | jq -r '.name')
+                digest=$(echo "$obj" | jq -r '.digest')
+                [ -n "$digest" ] || continue
+                touch "/tmp/digests/${digest#sha256:}"
+                if [[ "$name" == *":"* && "$name" != *"@"* ]]; then
+                  # add mapping: set key name -> digest (string)
+                  jq --arg k "$name" --arg v "$digest" '. + {($k): $v}' "$MAPJSON" > "$MAPJSON.tmp" && mv "$MAPJSON.tmp" "$MAPJSON"
+                fi
               done
-            done
+            fi
           fi
+
+          # At minimum create a plain digest file for any single built image referenced in metadata
+          # (mapping JSON is authoritative for merge job)
 
       - name: Upload digest
         uses: actions/upload-artifact@v4
@@ -151,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Download digests
+      - name: Download digests and mappings
         uses: actions/download-artifact@v5
         with:
           path: /tmp/digests
@@ -173,51 +122,43 @@ jobs:
       - name: Create manifest lists and push
         working-directory: /tmp/digests
         run: |
-          # Create manifests for all PHP versions and variants
+          # Combine all per-platform mapping JSONs into a single mapping (tag -> digest array)
+          COMBINED="/tmp/digests/combined-mapping.json"
+          echo '{}' > "$COMBINED"
+          for mj in mapping-*.json; do
+            [ -f "$mj" ] || continue
+            # mj is an object mapping tag -> digest; convert to tag -> [digest] and merge
+            jq -r 'to_entries[] | @base64' "$mj" | while read -r e; do
+              entry=$(echo "$e" | base64 --decode)
+              tag=$(echo "$entry" | jq -r '.key')
+              digest=$(echo "$entry" | jq -r '.value')
+              # append digest to combined mapping for this tag if not present
+              jq --arg t "$tag" --arg d "$digest" '(.[$t] //= []) | if index($d; .[$t]) then . else .[$t] += [$d] end' "$COMBINED" > "$COMBINED.tmp" 2>/dev/null || true
+              # fallback merge if the above jq expression fails (compat)
+              if [ -f "$COMBINED.tmp" ]; then mv "$COMBINED.tmp" "$COMBINED"; fi
+            done
+          done
+
+          # Create manifests for all PHP versions and variants using combined mapping
           for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
             for runtime in "" "-apache"; do
               for suffix in "" "-dev"; do
                 tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
                 echo "Creating manifest for $tag"
-                # Collect digests for this tag from all mapping files
-                digests=()
-                for map in $(ls mapping-*.txt 2>/dev/null || true); do
-                  while read -r line; do
-                    t=$(echo "$line" | awk '{print $1}')
-                    d=$(echo "$line" | awk '{print $2}')
-                    if [ "$t" = "$tag" ]; then
-                      digests+=("${{ env.REGISTRY_IMAGE }}@${d}")
-                    fi
-                  done < "$map"
+                # get digests array for this tag
+                digs=$(jq -r --arg t "$tag" '.[$t] // [] | @sh' "$COMBINED")
+                # convert to bash array
+                eval "darr=$digs"
+                # build args for imagetools
+                args=()
+                for d in "${darr[@]}"; do
+                  args+=("${{ env.REGISTRY_IMAGE }}@$d")
                 done
-
-                if [ ${#digests[@]} -eq 0 ]; then
+                if [ ${#args[@]} -eq 0 ]; then
                   echo "Warning: no digests found for $tag; skipping"
                   continue
                 fi
-
-                # If we have fewer than 2 digests, try a quick registry inspect to find any missing manifests
-                if [ ${#digests[@]} -lt 2 ]; then
-                  echo "Found ${#digests[@]} digests for $tag; attempting registry inspect to add missing manifests"
-                  if docker buildx imagetools inspect --raw "$tag" >/tmp/manifest.json 2>/dev/null; then
-                    jq -r '.manifests[]?.digest // empty' /tmp/manifest.json | while read -r md; do
-                      [ -n "$md" ] || continue
-                      entry="${{ env.REGISTRY_IMAGE }}@${md}"
-                      # add if not already present
-                      skip=0
-                      for ex in "${digests[@]}"; do
-                        if [ "$ex" = "$entry" ]; then skip=1; break; fi
-                      done
-                      if [ "$skip" -eq 0 ]; then
-                        digests+=("$entry")
-                      fi
-                    done
-                  else
-                    echo "Warning: registry inspect failed for $tag"
-                  fi
-                fi
-
-                docker buildx imagetools create -t "$tag" "${digests[@]}"
+                docker buildx imagetools create -t "$tag" "${args[@]}"
               done
             done
           done
