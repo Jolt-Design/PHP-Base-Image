@@ -88,6 +88,29 @@ jobs:
           # At minimum create a plain digest file for any single built image referenced in metadata
           # (mapping JSON is authoritative for merge job)
 
+          # Create OCI archives for each tag so merge can re-push them atomically later.
+          # Install skopeo and export docker creds for skopeo to use.
+          sudo apt-get update && sudo apt-get install -y skopeo jq
+          export DOCKER_AUTH_CONFIG="$(cat ~/.docker/config.json)"
+          mkdir -p /tmp/digests/artifacts
+          for version in $(jq -r '.["php-versions"][]' versions.json); do
+            for runtime in "" "-apache"; do
+              for suffix in "" "-dev"; do
+                tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                safe=$(echo "$tag" | tr ':/' '-' )
+                out="/tmp/digests/${safe}-${PLATFORM_PAIR}.tar"
+                # try copying from registry into an OCI archive; retry once
+                if skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "docker://$tag" "oci-archive:$out" 2>/tmp/skopeo.err; then
+                  echo "Wrote archive $out"
+                else
+                  echo "Warning: skopeo failed for $tag, retrying once"
+                  sleep 2
+                  skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "docker://$tag" "oci-archive:$out" || echo "skopeo failed for $tag"
+                fi
+              done
+            done
+          done
+
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
@@ -124,6 +147,9 @@ jobs:
       - name: Create manifest lists and push
         working-directory: /tmp/digests
         run: |
+          # Install skopeo for copying OCI archives to the registry
+          sudo apt-get update && sudo apt-get install -y skopeo jq
+
           # Combine all per-platform mapping JSONs into a single mapping (tag -> digest array)
           COMBINED="/tmp/digests/combined-mapping.json"
           echo '{}' > "$COMBINED"
@@ -164,26 +190,40 @@ jobs:
             exit 1
           fi
 
+          # Push per-platform OCI archives to temporary tags so we can create final manifests.
+          # Artemis: temp tag format: <repo>:<version><runtime><suffix>-<platform>
+          for archive in /tmp/digests/*-*.tar; do
+            [ -f "$archive" ] || continue
+            base=$(basename "$archive")
+            # parse filename: joltdesign-php_8.4-apache-linux-amd64.tar -> extract version/runtime/suffix/platform
+            # We'll assume the mapping JSON tells us the final tag; use combined mapping to find corresponding final tag
+            # For simplicity, push archive under a temp tag matching the archive name
+            temp_tag="${{ env.REGISTRY_IMAGE }}:${base%.tar}"
+            echo "Pushing archive $archive -> $temp_tag"
+            skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "oci-archive:$archive" "docker://$temp_tag" || echo "Warning: failed to push $archive"
+          done
+
           # Create manifests for all PHP versions and variants using combined mapping
           for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
             for runtime in "" "-apache"; do
               for suffix in "" "-dev"; do
                 tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
                 echo "Creating manifest for $tag"
-                # get digests array for this tag
-                digs=$(jq -r --arg t "$tag" '.[$t] // [] | @sh' "$COMBINED")
-                # convert to bash array
-                eval "darr=$digs"
-                # build args for imagetools
+                # Build list of temp tags that correspond to this final tag by scanning archives
                 args=()
-                for d in "${darr[@]}"; do
-                  args+=("${{ env.REGISTRY_IMAGE }}@$d")
+                for archive in /tmp/digests/*-${version}*-${runtime}*-${suffix}*.tar; do
+                  [ -f "$archive" ] || continue
+                  base=$(basename "$archive")
+                  temp_tag="${{ env.REGISTRY_IMAGE }}:${base%.tar}"
+                  args+=("$temp_tag")
                 done
                 if [ ${#args[@]} -eq 0 ]; then
                   echo "Warning: no digests found for $tag; skipping"
                   continue
                 fi
+                # Create manifest from temp tags; buildx will resolve to the archived images
                 docker buildx imagetools create -t "$tag" "${args[@]}"
+                # Optionally: delete temp tags here if desired using registry API
               done
             done
           done
