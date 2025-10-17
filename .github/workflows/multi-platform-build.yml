@@ -1,0 +1,100 @@
+name: Multi-Platform Docker Build
+
+on:
+  workflow_dispatch:
+  schedule:
+    # run every day at 4:30
+    - cron: '30 4 * * *'
+  push:
+    branches: [master]
+
+env:
+  REGISTRY_IMAGE: joltdesign/php
+
+jobs:
+  build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-latest-arm64
+    steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/bake-action@v6
+        with:
+          set: |
+            *.platform=${{ matrix.platform }}
+            *.output=type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          # Extract all digests from the build metadata
+          echo '${{ steps.build.outputs.metadata }}' | jq -r 'to_entries[] | select(.value."containerimage.digest") | .value."containerimage.digest"' | while read digest; do
+            touch "/tmp/digests/${digest#sha256:}"
+          done
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ strategy.job-index }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest lists and push
+        working-directory: /tmp/digests
+        run: |
+          # Create manifests for all PHP versions and variants
+          for version in 8.2 8.3 8.4; do
+            for runtime in "" "-apache"; do
+              for suffix in "" "-dev"; do
+                tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                echo "Creating manifest for $tag"
+                docker buildx imagetools create -t "$tag" \
+                  $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+              done
+            done
+          done
