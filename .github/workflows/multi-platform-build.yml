@@ -107,6 +107,21 @@ jobs:
                   sleep 2
                   skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "docker://$tag" "oci-archive:$out" || echo "skopeo failed for $tag"
                 fi
+
+                # Inspect registry to obtain the digest for this tag and record mapping
+                if digest=$(skopeo inspect --raw "docker://$tag" 2>/dev/null | jq -r '.digest // empty'); then
+                  if [ -n "$digest" ]; then
+                    echo "Found digest $digest for $tag"
+                    # create digest file for compatibility
+                    touch "/tmp/digests/${digest#sha256:}"
+                    # record mapping tag -> digest in JSON
+                    jq --arg k "$tag" --arg v "$digest" '. + {($k): $v}' "$MAPJSON" > "$MAPJSON.tmp" && mv "$MAPJSON.tmp" "$MAPJSON" || true
+                  else
+                    echo "Warning: no digest found via skopeo inspect for $tag"
+                  fi
+                else
+                  echo "Warning: skopeo inspect failed for $tag"
+                fi
               done
             done
           done
