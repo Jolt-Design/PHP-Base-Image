@@ -80,8 +80,9 @@ jobs:
             done
           fi
 
-          # If no digests found in metadata, fall back to querying the registry for this job's platform
-          if [ -z "$(ls -A /tmp/digests || true)" ]; then
+          # If no mapping entries were written from metadata, fall back to querying the registry
+          # for this job's platform. We check the per-platform MAPFILE to decide.
+          if [ ! -s "$MAPFILE" ]; then
             echo "No digests found in bake metadata — querying registry for per-platform digests"
             # PLATFORM_PAIR is set in Prepare step (e.g. linux-amd64)
             PLATFORM_PAIR=${PLATFORM_PAIR}
