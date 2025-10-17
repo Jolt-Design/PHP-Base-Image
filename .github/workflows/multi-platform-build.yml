@@ -170,15 +170,10 @@ jobs:
           echo '{}' > "$COMBINED"
           for mj in mapping-*.json; do
             [ -f "$mj" ] || continue
-            # mj is an object mapping tag -> digest; convert to tag -> [digest] and merge
-            jq -r 'to_entries[] | @base64' "$mj" | while read -r e; do
-              entry=$(echo "$e" | base64 --decode)
-              tag=$(echo "$entry" | jq -r '.key')
-              digest=$(echo "$entry" | jq -r '.value')
-              # append digest to combined mapping for this tag if not present
-              jq --arg t "$tag" --arg d "$digest" '(.[$t] //= []) | if index($d; .[$t]) then . else .[$t] += [$d] end' "$COMBINED" > "$COMBINED.tmp" 2>/dev/null || true
-              # fallback merge if the above jq expression fails (compat)
-              if [ -f "$COMBINED.tmp" ]; then mv "$COMBINED.tmp" "$COMBINED"; fi
+            # For each mapping file, iterate entries and append digest to combined mapping
+            jq -r 'to_entries[] | "\(.key)\t\(.value)"' "$mj" | while IFS=$'\t' read -r tag digest; do
+              # use jq to append the digest to the array for this tag (unique)
+              jq --arg t "$tag" --arg d "$digest" '.[$t] = ((.[$t] // []) + [$d] | unique)' "$COMBINED" > "$COMBINED.tmp" && mv "$COMBINED.tmp" "$COMBINED"
             done
           done
 
@@ -206,16 +201,23 @@ jobs:
           fi
 
           # Push per-platform OCI archives to temporary tags so we can create final manifests.
-          # Artemis: temp tag format: <repo>:<version><runtime><suffix>-<platform>
-          for archive in /tmp/digests/*-*.tar; do
-            [ -f "$archive" ] || continue
-            base=$(basename "$archive")
-            # parse filename: joltdesign-php_8.4-apache-linux-amd64.tar -> extract version/runtime/suffix/platform
-            # We'll assume the mapping JSON tells us the final tag; use combined mapping to find corresponding final tag
-            # For simplicity, push archive under a temp tag matching the archive name
-            temp_tag="${{ env.REGISTRY_IMAGE }}:${base%.tar}"
-            echo "Pushing archive $archive -> $temp_tag"
-            skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "oci-archive:$archive" "docker://$temp_tag" || echo "Warning: failed to push $archive"
+          # We compute the archive 'safe' name from the final tag (same approach as build) and push matching archives.
+          # This avoids fragile globs when runtime is empty.
+          for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
+            for runtime in "" "-apache"; do
+              for suffix in "" "-dev"; do
+                final_tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                safe=$(echo "$final_tag" | tr ':/' '-')
+                # archives for this tag will be named like ${safe}-<platform>.tar
+                for archive in /tmp/digests/${safe}-*.tar; do
+                  [ -f "$archive" ] || continue
+                  base=$(basename "$archive")
+                  temp_tag="${{ env.REGISTRY_IMAGE }}:${base%.tar}"
+                  echo "Pushing archive $archive -> $temp_tag"
+                  skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "oci-archive:$archive" "docker://$temp_tag" || echo "Warning: failed to push $archive"
+                done
+              done
+            done
           done
 
           # Create manifests for all PHP versions and variants using combined mapping
@@ -224,9 +226,10 @@ jobs:
               for suffix in "" "-dev"; do
                 tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
                 echo "Creating manifest for $tag"
-                # Build list of temp tags that correspond to this final tag by scanning archives
+                # Build list of temp tags that correspond to this final tag by finding archives using the same safe-name
                 args=()
-                for archive in /tmp/digests/*-${version}*-${runtime}*-${suffix}*.tar; do
+                safe=$(echo "${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}" | tr ':/' '-')
+                for archive in /tmp/digests/${safe}-*.tar; do
                   [ -f "$archive" ] || continue
                   base=$(basename "$archive")
                   temp_tag="${{ env.REGISTRY_IMAGE }}:${base%.tar}"
