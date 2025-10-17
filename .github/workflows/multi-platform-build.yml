@@ -56,15 +56,47 @@ jobs:
         with:
           set: |
             *.platform=${{ matrix.platform }}
-            *.output=type=image,push-by-digest=true,name-canonical=true,push=true
+            # Use normal push; do not force push-by-digest which can cause Docker
+            # Hub to reject pushing tagged refs by digest.
+            *.output=type=image,push=true
 
       - name: Export digest
         run: |
+          set -euo pipefail
           mkdir -p /tmp/digests
-          # Extract all digests from the build metadata
-          echo '${{ steps.build.outputs.metadata }}' | jq -r 'to_entries[] | select(.value."containerimage.digest") | .value."containerimage.digest"' | while read digest; do
-            touch "/tmp/digests/${digest#sha256:}"
-          done
+          # Try to extract digests from build metadata first (works if bake emitted them)
+          if echo '${{ steps.build.outputs.metadata }}' | jq -e '. | length > 0' >/dev/null 2>&1; then
+            echo '${{ steps.build.outputs.metadata }}' | jq -r 'to_entries[] | select(.value."containerimage.digest") | .value."containerimage.digest"' | while read -r digest; do
+              [ -n "$digest" ] || continue
+              touch "/tmp/digests/${digest#sha256:}"
+            done
+          fi
+
+          # If no digests found in metadata, fall back to querying the registry for this job's platform
+          if [ -z "$(ls -A /tmp/digests || true)" ]; then
+            echo "No digests found in bake metadata — querying registry for per-platform digests"
+            # PLATFORM_PAIR is set in Prepare step (e.g. linux-amd64)
+            PLATFORM_PAIR=${PLATFORM_PAIR}
+            # For each version/runtime/suffix combination, inspect the pushed tag and pick the manifest for this platform
+            for version in $(jq -r '.["php-versions"][]' versions.json); do
+              for runtime in "" "-apache"; do
+                for suffix in "" "-dev"; do
+                  tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                  echo "Inspecting $tag for platform $PLATFORM_PAIR"
+                  # imagetools inspect returns manifest list JSON; select the digest for the matching platform
+                  # Note: buildx imagetools is available after setup-buildx-action
+                  if docker buildx imagetools inspect --raw "$tag" >/tmp/manifest.json 2>/dev/null; then
+                    jq -r --arg pair "$PLATFORM_PAIR" '.manifests[] | select((.platform.os//"") + "-" + (.platform.architecture//"") == $pair) | .digest' /tmp/manifest.json | while read -r digest; do
+                      [ -n "$digest" ] || continue
+                      touch "/tmp/digests/${digest#sha256:}"
+                    done
+                  else
+                    echo "Warning: failed to inspect $tag — it may not exist yet"
+                  fi
+                done
+              done
+            done
+          fi
 
       - name: Upload digest
         uses: actions/upload-artifact@v4
