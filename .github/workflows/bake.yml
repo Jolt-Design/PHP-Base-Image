@@ -24,10 +24,16 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      -
-        name: Build and push
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read PHP versions
+        id: versions
+        run: echo "versions=$(jq -r '.[\"php-versions\"] | join(",")' versions.json)" >> $GITHUB_OUTPUT
+
+      - name: Build and push
         uses: docker/bake-action@v6
         env:
-          platforms: linux/amd64,linux/arm64
+          PHP_VERSIONS: ${{ steps.versions.outputs.versions }}
         with:
           push: true

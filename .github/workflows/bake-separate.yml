@@ -28,6 +28,13 @@ jobs:
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
 
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read PHP versions
+        id: versions
+        run: echo "versions=$(jq -r '.[\"php-versions\"] | join(",")' versions.json)" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -35,7 +42,7 @@ jobs:
         id: bake
         uses: docker/bake-action@v6
         env:
-          platforms: ${{ matrix.platform }}
+          PHP_VERSIONS: ${{ steps.versions.outputs.versions }}
         with:
           set: |
             *.output=type=image,push-by-digest=true,name-canonical=true,push=true
@@ -75,11 +82,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Create manifest list and push
+      - name: Create manifest lists and push
         working-directory: ${{ runner.temp }}/digests
         run: |
-          docker buildx imagetools create $(jq -cr '.target[].tags | map(select(startswith("${{ env.REGISTRY_IMAGE }}")) | "-t " + .) | join(" ")' docker-bake.hcl) \
-            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+          for version in $(jq -r '."php-versions"[]' "${{ github.workspace }}/versions.json"); do
+            for runtime in "" "-apache"; do
+              for suffix in "" "-dev"; do
+                tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                echo "Creating manifest for $tag"
+                docker buildx imagetools create -t "$tag" \
+                  $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+              done
+            done
+          done
 
       - name: Inspect image
         run: |

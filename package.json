@@ -10,10 +10,10 @@
     "ignoredBranchesPattern": "^dependabot/"
   },
   "scripts": {
-    "build": "jolt cmd '{cmd:docker}' buildx bake",
+    "build": "yarn node bin/bake.js",
     "build:remote": "jolt aws codebuild start --batch '{tf:codebuild_project_name}'",
     "prepare": "jolt prepare",
-    "push": "run build --push"
+    "push": "yarn run build --push"
   },
   "devDependencies": {
     "@joltdesign/scripts": "^0.22.0"

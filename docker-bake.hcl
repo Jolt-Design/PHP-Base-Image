@@ -3,13 +3,12 @@ variable "platforms" {
   default = "linux/amd64"
 }
 
+variable "PHP_VERSIONS" {}
+
 variable "versions" {
-  default = [
-    "8.2",
-    "8.3",
-    "8.4",
-  ]
+  default = split(",", PHP_VERSIONS)
 }
+
 
 variable "runtimes" {
   default = [

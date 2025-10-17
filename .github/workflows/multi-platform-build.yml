@@ -31,6 +31,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Read PHP versions
+        id: versions
+        run: echo "versions=$(jq -r '.["php-versions"] | join(",")' versions.json)" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -43,6 +47,8 @@ jobs:
       - name: Build and push by digest
         id: build
         uses: docker/bake-action@v6
+        env:
+          PHP_VERSIONS: ${{ steps.versions.outputs.versions }}
         with:
           set: |
             *.platform=${{ matrix.platform }}
@@ -84,11 +90,14 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Checkout (for versions file)
+        uses: actions/checkout@v4
+
       - name: Create manifest lists and push
         working-directory: /tmp/digests
         run: |
           # Create manifests for all PHP versions and variants
-          for version in 8.2 8.3 8.4; do
+          for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
             for runtime in "" "-apache"; do
               for suffix in "" "-dev"; do
                 tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
