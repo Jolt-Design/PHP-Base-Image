@@ -196,6 +196,27 @@ jobs:
                   continue
                 fi
 
+                # If we have fewer than 2 digests, try a quick registry inspect to find any missing manifests
+                if [ ${#digests[@]} -lt 2 ]; then
+                  echo "Found ${#digests[@]} digests for $tag; attempting registry inspect to add missing manifests"
+                  if docker buildx imagetools inspect --raw "$tag" >/tmp/manifest.json 2>/dev/null; then
+                    jq -r '.manifests[]?.digest // empty' /tmp/manifest.json | while read -r md; do
+                      [ -n "$md" ] || continue
+                      entry="${{ env.REGISTRY_IMAGE }}@${md}"
+                      # add if not already present
+                      skip=0
+                      for ex in "${digests[@]}"; do
+                        if [ "$ex" = "$entry" ]; then skip=1; break; fi
+                      done
+                      if [ "$skip" -eq 0 ]; then
+                        digests+=("$entry")
+                      fi
+                    done
+                  else
+                    echo "Warning: registry inspect failed for $tag"
+                  fi
+                fi
+
                 docker buildx imagetools create -t "$tag" "${digests[@]}"
               done
             done
