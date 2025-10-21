@@ -9,13 +9,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@joltdesign/docker-php-base@workspace:."
   dependencies:
-    "@joltdesign/scripts": "npm:^0.22.1"
+    "@joltdesign/scripts": "npm:^0.22.2"
   languageName: unknown
   linkType: soft
 
-"@joltdesign/scripts@npm:^0.22.1":
-  version: 0.22.1
-  resolution: "@joltdesign/scripts@npm:0.22.1"
+"@joltdesign/scripts@npm:^0.22.2":
+  version: 0.22.2
+  resolution: "@joltdesign/scripts@npm:0.22.2"
   dependencies:
     ansis: "npm:^4.2.0"
     change-case: "npm:^5.4.4"
@@ -28,7 +28,7 @@ __metadata:
     zod: "npm:^4.1.12"
   bin:
     jolt: ./dist/cli.js
-  checksum: 10c0/0ed2cf56696fa7d5a29b7b4f6dbe939d290bcb75484ccc69610273ea195b238b66d92c7d186721d415498f9493c618e6c394f70a926c667ec4ec4d5b623e114a
+  checksum: 10c0/2a8cafdfbfc6949c17b91aea381d309bc75c16242aba2dd14864f8dd9910042b291c03b1ebf34c492d7e0fd5641d7d1a1decce7b3a8ddacfd3ff5c5886744743
   languageName: node
   linkType: hard
 
