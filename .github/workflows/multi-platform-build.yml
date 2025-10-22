@@ -19,9 +19,9 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
-            runner: ubuntu-latest
+            runner: ubuntu-22.04
           - platform: linux/arm64
-            runner: ubuntu-latest-arm64
+            runner: ubuntu-22.04-arm
     steps:
       - name: Prepare
         run: |
@@ -49,17 +49,81 @@ jobs:
         uses: docker/bake-action@v6
         env:
           PHP_VERSIONS: ${{ steps.versions.outputs.versions }}
+        # Don't override 'name' here — let docker-bake.hcl 'tags' control image names.
+        # Overriding 'name' to the repository without tags causes buildx to attempt
+        # pushing tagged refs by digest which Docker Hub rejects; removing the
+        # name override avoids the "can't push tagged ref ... by digest" error.
         with:
           set: |
             *.platform=${{ matrix.platform }}
-            *.output=type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+            *.output=type=image,push=true
 
-      - name: Export digest
+      - name: Export digest and mapping
         run: |
+          set -euo pipefail
           mkdir -p /tmp/digests
-          # Extract all digests from the build metadata
-          echo '${{ steps.build.outputs.metadata }}' | jq -r 'to_entries[] | select(.value."containerimage.digest") | .value."containerimage.digest"' | while read digest; do
-            touch "/tmp/digests/${digest#sha256:}"
+          # Mapping JSON path (per-platform)
+          MAPJSON="/tmp/digests/mapping-${PLATFORM_PAIR}.json"
+          # Build mapping from bake metadata: tag -> digest
+          echo '{}' > "$MAPJSON"
+
+          if echo '${{ steps.build.outputs.metadata }}' | jq -e '. | length > 0' >/dev/null 2>&1; then
+            # Create an array of {name, digest} objects for entries that include containerimage.digest
+            echo '${{ steps.build.outputs.metadata }}' | jq -c '[ to_entries[] | select(.value."containerimage.digest") | {name: .value."containerimage.name", digest: .value."containerimage.digest"} ]' > /tmp/_meta_array.json
+            if [ -s /tmp/_meta_array.json ]; then
+              # For each element, if name contains a tag (':' and not '@'), add to mapping
+              jq -c '.[]' /tmp/_meta_array.json | while read -r obj; do
+                name=$(echo "$obj" | jq -r '.name')
+                digest=$(echo "$obj" | jq -r '.digest')
+                [ -n "$digest" ] || continue
+                touch "/tmp/digests/${digest#sha256:}"
+                if [[ "$name" == *":"* && "$name" != *"@"* ]]; then
+                  # add mapping: set key name -> digest (string)
+                  jq --arg k "$name" --arg v "$digest" '. + {($k): $v}' "$MAPJSON" > "$MAPJSON.tmp" && mv "$MAPJSON.tmp" "$MAPJSON"
+                fi
+              done
+            fi
+          fi
+
+          # At minimum create a plain digest file for any single built image referenced in metadata
+          # (mapping JSON is authoritative for merge job)
+
+          # Create OCI archives for each tag so merge can re-push them atomically later.
+          # Install skopeo and export docker creds for skopeo to use.
+          sudo apt-get update && sudo apt-get install -y skopeo jq
+          export DOCKER_AUTH_CONFIG="$(cat ~/.docker/config.json)"
+          mkdir -p /tmp/digests/artifacts
+          for version in $(jq -r '.["php-versions"][]' versions.json); do
+            for runtime in "" "-apache"; do
+              for suffix in "" "-dev"; do
+                tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                safe=$(echo "$tag" | tr ':/' '-' )
+                out="/tmp/digests/${safe}-${PLATFORM_PAIR}.tar"
+                # try copying from registry into an OCI archive; retry once
+                if skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "docker://$tag" "oci-archive:$out" 2>/tmp/skopeo.err; then
+                  echo "Wrote archive $out"
+                else
+                  echo "Warning: skopeo failed for $tag, retrying once"
+                  sleep 2
+                  skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "docker://$tag" "oci-archive:$out" || echo "skopeo failed for $tag"
+                fi
+
+                # Inspect registry to obtain the digest for this tag and record mapping
+                if digest=$(skopeo inspect --raw "docker://$tag" 2>/dev/null | jq -r '.digest // empty'); then
+                  if [ -n "$digest" ]; then
+                    echo "Found digest $digest for $tag"
+                    # create digest file for compatibility
+                    touch "/tmp/digests/${digest#sha256:}"
+                    # record mapping tag -> digest in JSON
+                    jq --arg k "$tag" --arg v "$digest" '. + {($k): $v}' "$MAPJSON" > "$MAPJSON.tmp" && mv "$MAPJSON.tmp" "$MAPJSON" || true
+                  else
+                    echo "Warning: no digest found via skopeo inspect for $tag"
+                  fi
+                else
+                  echo "Warning: skopeo inspect failed for $tag"
+                fi
+              done
+            done
           done
 
       - name: Upload digest
@@ -73,8 +137,10 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      EXPECTED_PLATFORMS: 2
     steps:
-      - name: Download digests
+      - name: Download digests and mappings
         uses: actions/download-artifact@v5
         with:
           path: /tmp/digests
@@ -96,14 +162,86 @@ jobs:
       - name: Create manifest lists and push
         working-directory: /tmp/digests
         run: |
-          # Create manifests for all PHP versions and variants
+          # Install skopeo for copying OCI archives to the registry
+          sudo apt-get update && sudo apt-get install -y skopeo jq
+
+          # Combine all per-platform mapping JSONs into a single mapping (tag -> digest array)
+          COMBINED="/tmp/digests/combined-mapping.json"
+          echo '{}' > "$COMBINED"
+          for mj in mapping-*.json; do
+            [ -f "$mj" ] || continue
+            # For each mapping file, iterate entries and append digest to combined mapping
+            jq -r 'to_entries[] | "\(.key)\t\(.value)"' "$mj" | while IFS=$'\t' read -r tag digest; do
+              # use jq to append the digest to the array for this tag (unique)
+              jq --arg t "$tag" --arg d "$digest" '.[$t] = ((.[$t] // []) + [$d] | unique)' "$COMBINED" > "$COMBINED.tmp" && mv "$COMBINED.tmp" "$COMBINED"
+            done
+          done
+
+          # Verify combined mapping contains expected number of platform digests per tag
+          missing=()
+          for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
+            for runtime in "" "-apache"; do
+              for suffix in "" "-dev"; do
+                tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                count=$(jq -r --arg t "$tag" '.[$t] | length // 0' "$COMBINED")
+                if [ "$count" -lt "${EXPECTED_PLATFORMS}" ]; then
+                  missing+=("$tag:$count")
+                fi
+              done
+            done
+          done
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Error: combined mapping missing digests for some tags (expected ${EXPECTED_PLATFORMS}):"
+            for m in "${missing[@]}"; do
+              echo "  $m"
+            done
+            echo "Failing merge to avoid creating incomplete manifests."
+            exit 1
+          fi
+
+          # Push per-platform OCI archives to temporary tags so we can create final manifests.
+          # We compute the archive 'safe' name from the final tag (same approach as build) and push matching archives.
+          # This avoids fragile globs when runtime is empty.
+          for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
+            for runtime in "" "-apache"; do
+              for suffix in "" "-dev"; do
+                final_tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
+                safe=$(echo "$final_tag" | tr ':/' '-')
+                # archives for this tag will be named like ${safe}-<platform>.tar
+                for archive in /tmp/digests/${safe}-*.tar; do
+                  [ -f "$archive" ] || continue
+                  base=$(basename "$archive")
+                  temp_tag="${{ env.REGISTRY_IMAGE }}:${base%.tar}"
+                  echo "Pushing archive $archive -> $temp_tag"
+                  skopeo copy --dest-creds "${{ vars.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" "oci-archive:$archive" "docker://$temp_tag" || echo "Warning: failed to push $archive"
+                done
+              done
+            done
+          done
+
+          # Create manifests for all PHP versions and variants using combined mapping
           for version in $(jq -r '.["php-versions"][]' "${{ github.workspace }}/versions.json"); do
             for runtime in "" "-apache"; do
               for suffix in "" "-dev"; do
                 tag="${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}"
                 echo "Creating manifest for $tag"
-                docker buildx imagetools create -t "$tag" \
-                  $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+                # Build list of temp tags that correspond to this final tag by finding archives using the same safe-name
+                args=()
+                safe=$(echo "${{ env.REGISTRY_IMAGE }}:${version}${runtime}${suffix}" | tr ':/' '-')
+                for archive in /tmp/digests/${safe}-*.tar; do
+                  [ -f "$archive" ] || continue
+                  base=$(basename "$archive")
+                  temp_tag="${{ env.REGISTRY_IMAGE }}:${base%.tar}"
+                  args+=("$temp_tag")
+                done
+                if [ ${#args[@]} -eq 0 ]; then
+                  echo "Warning: no digests found for $tag; skipping"
+                  continue
+                fi
+                # Create manifest from temp tags; buildx will resolve to the archived images
+                docker buildx imagetools create -t "$tag" "${args[@]}"
+                # Optionally: delete temp tags here if desired using registry API
               done
             done
           done
