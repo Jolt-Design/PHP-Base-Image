@@ -12,7 +12,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Read PHP versions from versions.json (single source of truth)
-const versionsPath = path.join(__dirname, 'versions.json');
+const versionsPath = path.join(__dirname, '..', 'versions.json');
 const versions = JSON.parse(fs.readFileSync(versionsPath, 'utf8'));
 const phpVersions = versions['php-versions'].join(',');
 
