@@ -7,6 +7,11 @@ on:
     - cron: '20 4 * * *'
   push:
     branches: [master]
+    paths:
+      - .github/workflows/bake-separate.yml
+      - build/**
+      - docker-bake.hcl
+      - versions.json
 
 env:
   REGISTRY_IMAGE: joltdesign/php
