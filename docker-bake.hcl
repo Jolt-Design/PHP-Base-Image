@@ -7,7 +7,9 @@ variable "platforms" {
   default = split(",", PLATFORMS)
 }
 
-variable "PHP_VERSIONS" {}
+variable "PHP_VERSIONS" {
+  default = "8.2, 8.3, 8.4"
+}
 
 variable "versions" {
   default = split(",", PHP_VERSIONS)
