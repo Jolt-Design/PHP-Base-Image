@@ -1,6 +1,10 @@
-variable "platforms" {
+variable "PLATFORMS" {
   // This is a string so it can be overwritten with env vars for testing
   default = "linux/amd64"
+}
+
+variable "platforms" {
+  default = split(",", PLATFORMS)
 }
 
 variable "PHP_VERSIONS" {}
@@ -8,7 +12,6 @@ variable "PHP_VERSIONS" {}
 variable "versions" {
   default = split(",", PHP_VERSIONS)
 }
-
 
 variable "runtimes" {
   default = [
@@ -67,8 +70,7 @@ target "php" {
     IMAGICK_VERSION = try(dependency_versions[version]["imagick"], null)
   }
 
-  platforms = split(",", platforms)
-
+  platforms = platforms
   target = dev ? "dev" : "production"
 
   tags = concat(

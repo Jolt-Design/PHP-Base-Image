@@ -16,7 +16,7 @@ batch:
         compute-type: BUILD_GENERAL1_MEDIUM
         privileged-mode: true
         variables:
-          platforms: linux/amd64
+          PLATFORMS: linux/amd64
           ARCH: amd64
           tag_suffix: -amd64
       buildspec: buildspec-platform.yml
@@ -28,7 +28,7 @@ batch:
         compute-type: BUILD_GENERAL1_MEDIUM
         privileged-mode: true
         variables:
-          platforms: linux/arm64
+          PLATFORMS: linux/arm64
           ARCH: arm64
           tag_suffix: -arm64
       buildspec: buildspec-platform.yml
