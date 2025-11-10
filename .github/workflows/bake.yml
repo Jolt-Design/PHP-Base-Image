@@ -37,6 +37,7 @@ jobs:
       - name: Build and push
         uses: docker/bake-action@v6
         env:
+          PLATFORMS: linux/amd64,linux/arm64
           PHP_VERSIONS: ${{ steps.versions.outputs.versions }}
         with:
           push: true
