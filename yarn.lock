@@ -9,13 +9,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@joltdesign/docker-php-base@workspace:."
   dependencies:
-    "@joltdesign/scripts": "npm:^0.23.0"
+    "@joltdesign/scripts": "npm:^1.1.1"
   languageName: unknown
   linkType: soft
 
-"@joltdesign/scripts@npm:^0.23.0":
-  version: 0.23.0
-  resolution: "@joltdesign/scripts@npm:0.23.0"
+"@joltdesign/scripts@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@joltdesign/scripts@npm:1.1.1"
   dependencies:
     ansis: "npm:^4.2.0"
     change-case: "npm:^5.4.4"
@@ -24,11 +24,11 @@ __metadata:
     execa: "npm:^9.6.0"
     object-resolve-path: "npm:^1.1.1"
     typanion: "npm:^3.14.0"
-    which: "npm:^5.0.0"
+    which: "npm:^6.0.0"
     zod: "npm:^4.1.12"
   bin:
     jolt: ./dist/cli.js
-  checksum: 10c0/a1db6e658e95128447cc4b6c6f6617a45c800e04bf5fa2e524cb79d495fc45cf8f486f141d7cd91c8949cda7bdcc7d923889a3c5f0ddac7cf71eb90e82dc0857
+  checksum: 10c0/53ea0e384b8655cf398d3aa371f698331d7312dbc50bfd06d4b327e9f676e3d648153e75b601ec6b46d6522799c7df0e0a2f3d2ba561059b7cea6401f4b9020f
   languageName: node
   linkType: hard
 
@@ -272,14 +272,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"which@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "which@npm:5.0.0"
+"which@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "which@npm:6.0.0"
   dependencies:
     isexe: "npm:^3.1.1"
   bin:
     node-which: bin/which.js
-  checksum: 10c0/e556e4cd8b7dbf5df52408c9a9dd5ac6518c8c5267c8953f5b0564073c66ed5bf9503b14d876d0e9c7844d4db9725fb0dcf45d6e911e17e26ab363dc3965ae7b
+  checksum: 10c0/fe9d6463fe44a76232bb6e3b3181922c87510a5b250a98f1e43a69c99c079b3f42ddeca7e03d3e5f2241bf2d334f5a7657cfa868b97c109f3870625842f4cc15
   languageName: node
   linkType: hard
 
