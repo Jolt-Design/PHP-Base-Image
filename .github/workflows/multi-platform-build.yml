@@ -68,7 +68,7 @@ jobs:
           done
 
       - name: Upload digest
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: digests-${{ strategy.job-index }}
           path: /tmp/digests/*
@@ -80,7 +80,7 @@ jobs:
     needs: build
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests
           pattern: digests-*
