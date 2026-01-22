@@ -8,7 +8,7 @@ variable "platforms" {
 }
 
 variable "PHP_VERSIONS" {
-  default = "8.2, 8.3, 8.4"
+  default = "8.2, 8.3, 8.4, 8.5"
 }
 
 variable "versions" {
@@ -43,6 +43,11 @@ variable "dependency_versions" {
       mcrypt = "disabled"
       imagick = "3.8.0RC2"
     }
+
+    "8.5" = {
+      mcrypt = "disabled"
+      opcache_disabled = true
+    }
   }
 }
 
@@ -70,6 +75,7 @@ target "php" {
     XDEBUG_VERSION = try(dependency_versions[version]["xdebug"], null)
     MCRYPT_VERSION = try(dependency_versions[version]["mcrypt"], null)
     IMAGICK_VERSION = try(dependency_versions[version]["imagick"], null)
+    OPCACHE_DISABLED = try(dependency_versions[version]["opcache_disabled"] ? 1 : 0, 0)
   }
 
   platforms = platforms
