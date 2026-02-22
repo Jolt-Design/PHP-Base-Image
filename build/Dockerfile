@@ -24,7 +24,10 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+RUN pecl config-set php_ini "${PHP_INI_DIR}/php.ini" \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) mysqli gd pdo_mysql $([ "x${OPCACHE_DISABLED}" != "x1" ] && echo opcache) exif zip intl \
     && pecl install redis $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt$([ "x${MCRYPT_VERSION}" != "x" ] && echo "-${MCRYPT_VERSION}")) imagick$([ "x${IMAGICK_VERSION}" != "x" ] && echo "-${IMAGICK_VERSION}") \
     && docker-php-ext-enable redis $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt) imagick \
@@ -36,10 +39,11 @@ RUN a2enmod alias ext_filter headers rewrite remoteip
 COPY ./php-conf.d/ /usr/local/etc/php/conf.d
 COPY ./apache-conf.d/ /etc/apache2/conf-enabled
 
-RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
-
 # dev includes Xdebug and other useful development settings by default
 FROM production AS dev
+
+RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+COPY ./dev-php-conf.d/ /usr/local/etc/php/conf.d
 
 # XDEBUG_VERSION overrides the version of Xdebug installed from PECL. Use this if your PHP version is too old for the most current version.
 ARG XDEBUG_VERSION=
@@ -49,7 +53,3 @@ RUN pecl install xdebug$([ "x${XDEBUG_VERSION}" != "x" ] && echo "-${XDEBUG_VERS
     && docker-php-ext-enable xdebug \
     && rm -rf /tmp/pear \
     && docker-php-source delete
-
-COPY ./dev-php-conf.d/ /usr/local/etc/php/conf.d
-
-RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
