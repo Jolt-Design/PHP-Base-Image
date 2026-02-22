@@ -26,8 +26,7 @@ RUN apt-get update \
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) mysqli gd pdo_mysql $([ "x${OPCACHE_DISABLED}" != "x1" ] && echo opcache) exif zip intl \
-    && pecl install $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt$([ "x${MCRYPT_VERSION}" != "x" ] && echo "-${MCRYPT_VERSION}")) imagick$([ "x${IMAGICK_VERSION}" != "x" ] && echo "-${IMAGICK_VERSION}") \
-    && pecl install -o -f redis \
+    && pecl install redis $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt$([ "x${MCRYPT_VERSION}" != "x" ] && echo "-${MCRYPT_VERSION}")) imagick$([ "x${IMAGICK_VERSION}" != "x" ] && echo "-${IMAGICK_VERSION}") \
     && docker-php-ext-enable redis $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt) imagick \
     && rm -rf /tmp/pear \
     && docker-php-source delete
