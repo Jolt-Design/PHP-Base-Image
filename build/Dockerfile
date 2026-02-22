@@ -26,12 +26,11 @@ RUN apt-get update \
 
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
-RUN pecl config-set php_ini "${PHP_INI_DIR}/php.ini" \
+RUN pecl bundle -d /usr/src/php/ext redis \
+    && if [ "x${MCRYPT_VERSION}" != "xdisabled" ]; then pecl bundle -d /usr/src/php/ext mcrypt$([ "x${MCRYPT_VERSION}" != "x" ] && echo "-${MCRYPT_VERSION}"); fi \
+    && pecl bundle -d /usr/src/php/ext imagick$([ "x${IMAGICK_VERSION}" != "x" ] && echo "-${IMAGICK_VERSION}") \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) mysqli gd pdo_mysql $([ "x${OPCACHE_DISABLED}" != "x1" ] && echo opcache) exif zip intl \
-    && pecl install redis $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt$([ "x${MCRYPT_VERSION}" != "x" ] && echo "-${MCRYPT_VERSION}")) imagick$([ "x${IMAGICK_VERSION}" != "x" ] && echo "-${IMAGICK_VERSION}") \
-    && docker-php-ext-enable redis $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt) imagick \
-    && rm -rf /tmp/pear \
+    && docker-php-ext-install -j$(nproc) mysqli gd pdo_mysql $([ "x${OPCACHE_DISABLED}" != "x1" ] && echo opcache) exif zip intl redis $([ "x${MCRYPT_VERSION}" != "xdisabled" ] && echo mcrypt) imagick \
     && docker-php-source delete
 
 RUN a2enmod alias ext_filter headers rewrite remoteip
@@ -49,7 +48,6 @@ COPY ./dev-php-conf.d/ /usr/local/etc/php/conf.d
 ARG XDEBUG_VERSION=
 
 # Install Xdebug
-RUN pecl install xdebug$([ "x${XDEBUG_VERSION}" != "x" ] && echo "-${XDEBUG_VERSION}") \
-    && docker-php-ext-enable xdebug \
-    && rm -rf /tmp/pear \
+RUN pecl bundle -d /usr/src/php/ext xdebug$([ "x${XDEBUG_VERSION}" != "x" ] && echo "-${XDEBUG_VERSION}") \
+    && docker-php-ext-install xdebug \
     && docker-php-source delete
