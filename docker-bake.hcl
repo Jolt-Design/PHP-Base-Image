@@ -83,5 +83,6 @@ target "php" {
   tags = concat(
     ["${image}:${version}-${runtime}${dev ? "-dev": ""}${tag_suffix}"],
     runtime == default_runtime ? ["${image}:${version}${dev ? "-dev": ""}${tag_suffix}"] : [],
+    convert(version, number) == max(versions...) ? ["${image}:latest${dev ? "-dev": ""}${tag_suffix}"] : [],
   )
 }
