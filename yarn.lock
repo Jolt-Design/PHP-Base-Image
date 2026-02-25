@@ -9,26 +9,26 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@joltdesign/docker-php-base@workspace:."
   dependencies:
-    "@joltdesign/scripts": "npm:^1.1.3"
+    "@joltdesign/scripts": "npm:^1.2.0"
   languageName: unknown
   linkType: soft
 
-"@joltdesign/scripts@npm:^1.1.3":
-  version: 1.1.3
-  resolution: "@joltdesign/scripts@npm:1.1.3"
+"@joltdesign/scripts@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@joltdesign/scripts@npm:1.2.0"
   dependencies:
     ansis: "npm:^4.2.0"
     change-case: "npm:^5.4.4"
     clipanion: "npm:^4.0.0-rc.4"
-    dotenv: "npm:^17.2.3"
+    dotenv: "npm:^17.3.1"
     execa: "npm:^9.6.1"
     object-resolve-path: "npm:^1.1.1"
     typanion: "npm:^3.14.0"
-    which: "npm:^6.0.0"
+    which: "npm:^6.0.1"
     zod: "npm:^4.3.6"
   bin:
     jolt: ./dist/cli.js
-  checksum: 10c0/fcc52f6d30f7d0f3f382575bd1a83144db7dfb734a35832ac1d0d549c0e0b753317861de13d80ddecc13032f02c6c3a65b213e65841633069f3991628b75eb08
+  checksum: 10c0/d05a73b59473ae35351ee4cb50d3c91fe7f2789b21281c30fd8fc20361252e12da698efda85fc4b7c9736837386c777601d19535560d75955fc97f2f3c15b1fb
   languageName: node
   linkType: hard
 
@@ -82,7 +82,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^17.2.3":
+"dotenv@npm:^17.3.1":
   version: 17.3.1
   resolution: "dotenv@npm:17.3.1"
   checksum: 10c0/c78e0c2d5a549c751e544cc60e2b95e7cb67e0c551f42e094d161c6b297aa44b630a3c2dcacf5569e529a6c2a6b84e2ab9be8d37b299d425df5a18b81ce4a35f
@@ -272,7 +272,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"which@npm:^6.0.0":
+"which@npm:^6.0.1":
   version: 6.0.1
   resolution: "which@npm:6.0.1"
   dependencies:
