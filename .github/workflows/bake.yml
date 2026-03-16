@@ -3,8 +3,8 @@ name: Build and Push
 on:
   workflow_dispatch:
   schedule:
-    # Run every day at 4:20
-    - cron: '20 4 * * *'
+    # Run every Sunday at 4:20
+    - cron: '20 4 * * 0'
   push:
     branches: [master]
     paths:
