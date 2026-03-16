@@ -19,7 +19,7 @@ const phpVersions = versions['php-versions'].join(',');
 // Set environment variable and run docker buildx bake
 const env = { ...process.env, PHP_VERSIONS: phpVersions };
 const args = process.argv.slice(2);
-const command = ['docker', 'buildx', 'bake', ...args];
+const command = ['yarn', 'run', 'jolt', 'cmd', '{cmd:docker}', 'buildx', 'bake', ...args];
 
 try {
   execSync(command.join(' '), {
