@@ -7,7 +7,7 @@
   "private": true,
   "jira-prepare-commit-msg": {
     "messagePattern": "$J $M",
-    "ignoredBranchesPattern": "^dependabot/"
+    "ignoredBranchesPattern": "^(dependabot/|renovate/)"
   },
   "scripts": {
     "build": "yarn node bin/bake.js",
