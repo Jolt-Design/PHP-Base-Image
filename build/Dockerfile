@@ -48,6 +48,6 @@ COPY ./dev-php-conf.d/ /usr/local/etc/php/conf.d
 ARG XDEBUG_VERSION=
 
 # Install Xdebug
-RUN pecl bundle -d /usr/src/php/ext xdebug$([ "x${XDEBUG_VERSION}" != "x" ] && echo "-${XDEBUG_VERSION}") \
-    && docker-php-ext-install -j$(nproc) xdebug \
-    && docker-php-source delete
+# RUN pecl bundle -d /usr/src/php/ext xdebug$([ "x${XDEBUG_VERSION}" != "x" ] && echo "-${XDEBUG_VERSION}") \
+#     && docker-php-ext-install -j$(nproc) xdebug \
+#     && docker-php-source delete
