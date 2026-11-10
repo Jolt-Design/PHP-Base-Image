@@ -23,5 +23,40 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(yarn build --print)",
+      "Bash(yarn build --print *)",
+      "Bash(yarn build --check)",
+      "Bash(yarn build --list *)",
+      "Bash(tofu fmt -check *)",
+      "Bash(tofu validate)",
+      "Bash(yarn biome format)",
+      "Bash(yarn biome format .)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
+      "Bash(gh workflow list *)",
+      "Bash(gh pr view *)",
+      "Bash(docker buildx ls)",
+      "Bash(.claude/hooks/run-guard-tests.sh *)",
+      "Bash(yarn biome check)",
+      "Bash(yarn biome check .)",
+      "Bash(yarn biome lint)",
+      "Bash(yarn biome lint .)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(*.tfvars)",
+      "Read(*.tfstate)",
+      "Read(*.tfstate.*)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.aws/credentials)"
+    ]
   }
 }
