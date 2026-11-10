@@ -16,5 +16,7 @@ Run `yarn build` to test builds. Pushing to `master` (changes under `build/`, `d
 
 `yarn push` pushes from your machine, but only for `PLATFORMS` (default `linux/amd64`), so it replaces the multi-platform tags with single-platform ones.
 
+Agent and contributor instructions: [AGENTS.md](AGENTS.md).
+
 [repo]: https://hub.docker.com/r/joltdesign/php
 [upstream]: https://hub.docker.com/_/php/
