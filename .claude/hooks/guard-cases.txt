@@ -1,0 +1,96 @@
+none|yarn build
+none|yarn build --print
+none|yarn build --check
+none|yarn build --list targets
+none|yarn build php-8-4-apache-dev --load
+none|PLATFORMS=linux/arm64 yarn build
+none|yarn run build --print
+none|docker buildx bake --print
+none|docker buildx bake --push --help
+none|yarn push --help
+none|yarn install
+none|yarn prepare
+none|yarn jolt config
+none|yarn jolt cmd {cmd:docker} buildx bake --print
+none|grep -n "yarn push" README.md
+none|grep -rn "docker push" docs
+none|cat docker-bake.hcl
+none|tofu fmt -check -recursive
+none|tofu validate
+none|tofu plan
+none|tofu output
+none|tofu output codebuild_project_name
+none|tofu destroy -help
+none|tofu destroy -help | head -3
+none|tofu apply --help 2>&1 | less
+none|tofu output -help
+none|git push origin chore/agent-setup
+none|git push -u origin chore/agent-setup
+none|git push
+none|git log --oneline | head
+none|gh run list -w "Build and Push"
+none|gh workflow list --all
+none|gh run view 123 --log-failed
+none|aws sts get-caller-identity
+none|aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin x.dkr.ecr.eu-west-1.amazonaws.com
+none|aws codebuild list-projects
+none|biome format .
+none|echo $PATH
+none|printenv PATH
+none|rm -rf .terraform
+none|docker images | grep joltdesign
+deny|tofu output -json
+deny|tofu output -raw codebuild_project_name
+deny|tofu output -json | jq .
+deny|tofu state pull
+deny|tofu show -json
+deny|tofu destroy
+deny|tofu destroy -help; tofu destroy
+deny|tofu destroy -help && tofu destroy
+deny|echo $(tofu destroy) --help
+deny|cat terraform.tfstate
+deny|cat terraform.tfstate.backup
+deny|jq . terraform.tfstate
+deny|cat .env
+deny|cat ~/.docker/config.json
+deny|aws ssm get-parameter --name /prod/sharedInfrastructure/dockerhub/password --with-decryption
+deny|aws ssm get-parameters-by-path --path /prod/sharedInfrastructure --with-decryption
+deny|aws secretsmanager get-secret-value --secret-id x
+deny|aws ecr get-login-password --region eu-west-1
+deny|gh auth token
+deny|env
+deny|printenv
+deny|echo $DOCKERHUB_TOKEN
+deny|git push --force origin master
+deny|git push -f origin main
+deny|git push --force-with-lease origin master
+deny|rm -rf /
+deny|rm -rf ~
+deny|rm -fr .
+ask|yarn push
+ask|yarn run push
+ask|yarn build --push
+ask|yarn run build --push
+ask|node bin/bake.js --push
+ask|docker buildx bake --push
+ask|docker buildx bake --set '*.output=type=image,push=true'
+ask|PLATFORMS=linux/amd64,linux/arm64 yarn build --push
+ask|yarn build:remote
+ask|yarn run build:remote
+ask|yarn jolt aws codebuild start --batch x
+ask|aws codebuild start-build-batch --project-name x
+ask|docker push joltdesign/php:8.4
+ask|docker manifest push joltdesign/php:8.4
+ask|docker buildx imagetools create -t joltdesign/php:8.4 a b
+ask|gh workflow run bake.yml
+ask|gh workflow enable bake-separate.yml
+ask|gh run rerun 123
+ask|git push origin master
+ask|git push origin HEAD:master
+ask|git push -u origin master
+ask|git push --force-with-lease origin chore/agent-setup
+ask|git reset --hard HEAD~1
+ask|git clean -fd
+ask|tofu apply
+ask|tofu import x y
+ask|tofu state rm x
