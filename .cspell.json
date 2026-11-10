@@ -55,5 +55,5 @@
   // For example "hte" should be "the"
   "flagWords": [],
   // allowCompoundWords - allow multiple words smashed together, like "stringlength"
-  "allowCompoundWords": true
+  "allowCompoundWords": true,
 }

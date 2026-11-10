@@ -7,9 +7,9 @@
  * Example: node bake.js --print
  *          node bake.js --push
  */
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const { execSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
 
 // Read PHP versions from versions.json (single source of truth)
 const versionsPath = path.join(__dirname, '..', 'versions.json');
