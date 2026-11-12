@@ -120,10 +120,12 @@ jobs:
           # ALL_PHP_VERSIONS keeps the latest tags on the highest version in
           # versions.json when php_versions builds a subset
           ALL_PHP_VERSIONS="$(jq -r '.["php-versions"] | join(",")' versions.json)"
-          PHP_VERSIONS="${INPUT_PHP_VERSIONS:-$ALL_PHP_VERSIONS}" ALL_PHP_VERSIONS="$ALL_PHP_VERSIONS" \
+          export ALL_PHP_VERSIONS
+          PHP_VERSIONS="${INPUT_PHP_VERSIONS:-$ALL_PHP_VERSIONS}" \
             docker buildx bake --print > "$RUNNER_TEMP/bake.json"
 
-          platform_count=$(ls "$METADATA_DIR"/metadata-*.json | wc -l)
+          metadata_files=("$METADATA_DIR"/metadata-*.json)
+          platform_count=${#metadata_files[@]}
 
           for target in $(jq -r '.target | keys[]' "$RUNNER_TEMP/bake.json"); do
             mapfile -t tags < <(jq -r --arg t "$target" '.target[$t].tags[]' "$RUNNER_TEMP/bake.json")
@@ -134,10 +136,12 @@ jobs:
               exit 1
             fi
 
+            args=()
+            for tag in "${tags[@]}"; do args+=(-t "$tag"); done
+            for digest in "${digests[@]}"; do args+=("$REGISTRY_IMAGE@$digest"); done
+
             echo "::group::$target -> ${tags[*]}"
-            docker buildx imagetools create \
-              $(printf -- '-t %s ' "${tags[@]}") \
-              $(printf -- "$REGISTRY_IMAGE@%s " "${digests[@]}")
+            docker buildx imagetools create "${args[@]}"
             echo "::endgroup::"
           done
 
