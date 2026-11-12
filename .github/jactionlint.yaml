@@ -1,0 +1,5 @@
+rules:
+  unpinned-uses:
+    policies:
+      "actions/*": ref-pin
+      "docker/*": ref-pin
