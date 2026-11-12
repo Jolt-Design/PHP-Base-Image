@@ -4,7 +4,7 @@ All routes push to `joltdesign/php` on Docker Hub and overwrite existing tags. A
 
 ## Live: GitHub Actions "Build and Push"
 
-File: `.github/workflows/bake.yml`. This is the only enabled workflow.
+File: `.github/workflows/bake.yml`.
 
 Triggers:
 
@@ -12,16 +12,14 @@ Triggers:
 - schedule: Sundays at 04:20 UTC (rebuilds against the latest upstream `php` images)
 - `workflow_dispatch`
 
-What it does: logs in to Docker Hub (`vars.DOCKERHUB_USERNAME`, `secrets.DOCKERHUB_TOKEN`), sets up QEMU and Buildx, reads `versions.json` with `jq`, and runs `docker/bake-action` with `PLATFORMS=linux/amd64,linux/arm64` and `push: true`. A run takes about 1.5–2 hours because arm64 is emulated.
+What it does:
+
+1. `build`: a matrix of two jobs, each on a native runner (`ubuntu-24.04` for `linux/amd64`, `ubuntu-24.04-arm` for `linux/arm64`; arm runners are free because the repo is public). Each job runs `docker/bake-action` for every target with `PLATFORMS` set to its own platform, clears the tags and pushes the images by digest only (`push-by-digest=true`), so no per-architecture tags appear on Docker Hub. It uploads the bake metadata (target name → digest) as an artifact.
+2. `merge`: runs `docker buildx bake --print` to get each target's tags from `docker-bake.hcl` (including `latest`), then for each target runs `docker buildx imagetools create` with that target's tags and its digest from every platform. It fails if a target is missing a digest.
+
+Each target's tags are updated only when both platforms have built.
 
 Check runs (read-only): `gh run list -w "Build and Push"`, `gh run view <id> --log-failed`.
-
-## Disabled workflows
-
-`bake-separate.yml` (build-separate-push) and `multi-platform-build.yml` (Multi-Platform Docker Build) build each platform on a native runner, push by digest, then merge manifests. Both are disabled in GitHub (`gh workflow list --all` shows `disabled_manually`). Known problems if they are re-enabled:
-
-- `bake-separate.yml` "Inspect image" runs `jq` on `docker-bake.hcl`, which is HCL, not JSON, so the step fails.
-- `multi-platform-build.yml` uses a runner label `ubuntu-latest-arm64`; `bake-separate.yml` uses `ubuntu-22.04-arm`.
 
 ## Legacy fallback: AWS CodeBuild
 

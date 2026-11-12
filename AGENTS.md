@@ -57,10 +57,10 @@ Source for the `joltdesign/php` Docker Hub image: the official `php:<version>-ap
 ## Integrations
 
 - **Docker Hub**: `joltdesign/php`. Publishing pipelines are described in `docs/publishing.md`.
-- **GitHub Actions**: only "Build and Push" (`.github/workflows/bake.yml`) is enabled. It runs on push to `master` (paths above), weekly on Sunday 04:20 UTC, and manually. `bake-separate.yml` and `multi-platform-build.yml` are disabled in GitHub.
+- **GitHub Actions**: "Build and Push" (`.github/workflows/bake.yml`). It runs on push to `master` (paths above), weekly on Sunday 04:20 UTC, and manually. It builds each platform on a native runner, pushes by digest, then merges one manifest list per bake target.
 - **AWS**: CodeBuild batch build (`buildspec.yml`, `buildspec-platform.yml`) is a legacy fallback, started with `yarn build:remote`. It pulls the base image through the ECR `docker-hub` pull-through cache. The project name comes from S3 remote state in `eu-west-1` via `data.tf`.
 - **Jira**: project `JA` on joltdesign.atlassian.net (`.jira.d/config.yml`), used only for commit prefixes.
 
 ## Further docs
 
-- `docs/publishing.md`: how images reach Docker Hub (GitHub Actions and the CodeBuild fallback), and known issues in the disabled workflows.
+- `docs/publishing.md`: how images reach Docker Hub (GitHub Actions and the CodeBuild fallback).
