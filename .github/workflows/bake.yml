@@ -33,6 +33,9 @@ jobs:
   # Build every bake target for one platform on a native runner and push the
   # images untagged (by digest). The merge job tags them.
   build:
+    concurrency:
+      group: build-${{ github.ref }}-${{ inputs.tag_suffix }}-${{ matrix.platform }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -93,6 +96,10 @@ jobs:
   # For each bake target, combine the per-platform digests into one manifest
   # list and give it the target's tags from docker-bake.hcl.
   merge:
+    # Never cancelled: stopping halfway would leave some tags moved and others not.
+    concurrency:
+      group: merge-${{ github.ref }}-${{ inputs.tag_suffix }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     needs: build
     steps:
