@@ -6,6 +6,9 @@ on:
       tag_suffix:
         description: Suffix appended to every tag (for test runs)
         default: ""
+      php_versions:
+        description: Comma-separated PHP versions to build instead of versions.json
+        default: ""
   schedule:
     # Run every Sunday at 4:20
     - cron: "20 4 * * 0"
@@ -21,6 +24,7 @@ env:
   REGISTRY_IMAGE: joltdesign/php
   # Bake variable: appended to every tag. Empty except on manual test runs.
   tag_suffix: ${{ inputs.tag_suffix }}
+  INPUT_PHP_VERSIONS: ${{ inputs.php_versions }}
 
 jobs:
   # Build every bake target for one platform on a native runner and push the
@@ -55,7 +59,7 @@ jobs:
 
       - name: Read PHP versions
         id: versions
-        run: echo "versions=$(jq -r '.["php-versions"] | join(",")' versions.json)" >> "$GITHUB_OUTPUT"
+        run: echo "versions=${INPUT_PHP_VERSIONS:-$(jq -r '.["php-versions"] | join(",")' versions.json)}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push by digest
         id: bake
@@ -113,7 +117,10 @@ jobs:
           METADATA_DIR: ${{ runner.temp }}/metadata
         run: |
           set -euo pipefail
-          PHP_VERSIONS="$(jq -r '.["php-versions"] | join(",")' versions.json)" \
+          # ALL_PHP_VERSIONS keeps the latest tags on the highest version in
+          # versions.json when php_versions builds a subset
+          ALL_PHP_VERSIONS="$(jq -r '.["php-versions"] | join(",")' versions.json)"
+          PHP_VERSIONS="${INPUT_PHP_VERSIONS:-$ALL_PHP_VERSIONS}" ALL_PHP_VERSIONS="$ALL_PHP_VERSIONS" \
             docker buildx bake --print > "$RUNNER_TEMP/bake.json"
 
           platform_count=$(ls "$METADATA_DIR"/metadata-*.json | wc -l)
@@ -135,4 +142,5 @@ jobs:
           done
 
       - name: Inspect image
-        run: docker buildx imagetools inspect "$REGISTRY_IMAGE:latest${tag_suffix}"
+        # A subset run may not include the latest tag, so inspect the first tag built
+        run: docker buildx imagetools inspect "$(jq -r '[.target[].tags[]][0]' "$RUNNER_TEMP/bake.json")"
