@@ -26,6 +26,9 @@ env:
   tag_suffix: ${{ inputs.tag_suffix }}
   INPUT_PHP_VERSIONS: ${{ inputs.php_versions }}
 
+permissions:
+  contents: read
+
 jobs:
   # Build every bake target for one platform on a native runner and push the
   # images untagged (by digest). The merge job tags them.
