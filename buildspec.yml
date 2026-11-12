@@ -50,23 +50,23 @@ phases:
     commands:
       - IMAGE=joltdesign/php
       - |
-          echo Creating manifests...
+        echo Creating manifests...
 
-          for VERSION in "8.2" "8.3" "8.4" "8.5"; do
-            for RUNTIME in "" "-apache"; do
-              for SUFFIX in "" "-dev"; do
-                TAG=${IMAGE}:${VERSION}${RUNTIME}${SUFFIX}
+        for VERSION in "8.2" "8.3" "8.4" "8.5"; do
+          for RUNTIME in "" "-apache"; do
+            for SUFFIX in "" "-dev"; do
+              TAG=${IMAGE}:${VERSION}${RUNTIME}${SUFFIX}
 
-                echo "Creating manifest for $TAG"
+              echo "Creating manifest for $TAG"
 
-                docker manifest create $TAG \
-                  ${TAG}-amd64 \
-                  ${TAG}-arm64
+              docker manifest create $TAG \
+                ${TAG}-amd64 \
+                ${TAG}-arm64
 
-                docker manifest push $TAG
-              done
+              docker manifest push $TAG
             done
           done
+        done
     finally:
       - rm -rfv ~/.docker
   post_build:

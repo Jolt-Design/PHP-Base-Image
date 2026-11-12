@@ -8,6 +8,7 @@
   "files": {
     "includes": [
       "bin/**/*.js",
+      "**/*.{yml,yaml}",
       "**/*.json",
       "**/*.md"
     ]
