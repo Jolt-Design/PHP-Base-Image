@@ -12,6 +12,7 @@
   "scripts": {
     "build": "yarn node bin/bake.js",
     "build:remote": "jolt aws codebuild start --batch '{tf:codebuild_project_name}'",
+    "lint": "biome check",
     "prepare": "jolt prepare",
     "push": "yarn run build --push"
   },
