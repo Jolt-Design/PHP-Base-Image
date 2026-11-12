@@ -15,6 +15,12 @@ variable "versions" {
   default = split(",", PHP_VERSIONS)
 }
 
+// Full version list, used only to pick which version gets the latest tags.
+// Defaults to PHP_VERSIONS; set it when PHP_VERSIONS is a subset.
+variable "ALL_PHP_VERSIONS" {
+  default = PHP_VERSIONS
+}
+
 variable "runtimes" {
   default = [
     "apache",
@@ -83,6 +89,6 @@ target "php" {
   tags = concat(
     ["${image}:${version}-${runtime}${dev ? "-dev": ""}${tag_suffix}"],
     runtime == default_runtime ? ["${image}:${version}${dev ? "-dev": ""}${tag_suffix}"] : [],
-    convert(version, number) == max(versions...) ? ["${image}:latest${dev ? "-dev": ""}${tag_suffix}"] : [],
+    convert(version, number) == max(split(",", ALL_PHP_VERSIONS)...) ? ["${image}:latest${dev ? "-dev": ""}${tag_suffix}"] : [],
   )
 }
