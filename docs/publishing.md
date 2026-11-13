@@ -15,7 +15,7 @@ Check runs (read-only): `gh run list -w "Build and Push"`, `gh run view <id> --l
 
 Started with `yarn build:remote`. `jolt` resolves the CodeBuild project name from the local state of `data.tf`, so `yarn prepare` (`tofu init` + `tofu refresh`) must have run with AWS credentials. The build steps are in `buildspec.yml` and `buildspec-platform.yml`.
 
-It doesn't read `versions.json` yet. It uses the `PHP_VERSIONS` default in `docker-bake.hcl` and a hardcoded loop in `buildspec.yml` (JA-33).
+Both buildspecs read the PHP versions from `versions.json` with `jq`.
 
 ## Local: `yarn push`
 

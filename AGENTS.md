@@ -4,7 +4,7 @@ Source for the `joltdesign/php` Docker Hub image: the official `php` Apache imag
 
 ## Where things are
 
-- `versions.json`: the PHP versions to build. `yarn build` and GitHub Actions read it.
+- `versions.json`: the PHP versions to build. `yarn build`, GitHub Actions and the CodeBuild buildspecs read it.
 - `docker-bake.hcl`: targets, tags, per-version `dependency_versions` overrides.
 - `build/Dockerfile`: `production` stage, then `dev` (php.ini-development + Xdebug).
 - `data.tf`: OpenTofu, read-only. It only reads the CodeBuild project name from the shared-infrastructure remote state.
