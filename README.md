@@ -8,7 +8,7 @@ A modified version of the [PHP image][upstream] with extensions required by Word
 
 1. Edit `versions.json` to add or remove PHP versions
 
-The GitHub workflows and `yarn build` read this file automatically. The legacy CodeBuild manifest step in `buildspec.yml` has its own hardcoded version list, so update that too.
+The GitHub workflows, the CodeBuild backup and `yarn build` read this file automatically.
 
 ## Building
 
