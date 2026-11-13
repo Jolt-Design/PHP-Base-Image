@@ -73,6 +73,7 @@ jobs:
         env:
           PLATFORMS: ${{ matrix.platform }}
           PHP_VERSIONS: ${{ steps.versions.outputs.versions }}
+          BUILDX_METADATA_PROVENANCE: disabled
         with:
           set: |
             *.tags=
