@@ -8,7 +8,11 @@ variable "platforms" {
 }
 
 variable "PHP_VERSIONS" {
-  default = "8.2, 8.3, 8.4, 8.5"
+  default = ""
+  validation {
+    condition = PHP_VERSIONS != ""
+    error_message = "Set PHP_VERSIONS (comma-separated). yarn build and CI read it from versions.json."
+  }
 }
 
 variable "versions" {
