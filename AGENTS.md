@@ -21,6 +21,7 @@ Source for the `joltdesign/php` Docker Hub image: the official `php` Apache imag
 | Build for another platform                                       | `PLATFORMS=linux/arm64 yarn build …`            |
 | Format and lint (Biome)                                          | `yarn lint` / `yarn biome check --write <file>` |
 | Check `.tf` formatting                                           | `tofu fmt -check -recursive`                    |
+| Lint GitHub Actions workflows                                    | `jactionlint`                                   |
 
 - `bin/bake.js` always overwrites `PHP_VERSIONS` from `versions.json`, so setting it in the environment has no effect through `yarn build`.
 - Yarn uses Plug'n'Play: run binaries installed by Yarn with `yarn <bin>`; there's no `node_modules/.bin`.
@@ -28,6 +29,7 @@ Source for the `joltdesign/php` Docker Hub image: the official `php` Apache imag
 ## Workflow
 
 - No CI runs on branches or PRs. Before committing a change to `build/`, `docker-bake.hcl` or `versions.json`, run `yarn build --print` and `yarn build --check`. For Dockerfile changes, also build at least one affected target.
+- Workflows under `.github/` must have no `jactionlint` findings (config: `.github/jactionlint.yaml`). Run `jactionlint` from the repo root after changing them.
 - Biome covers whatever `biome.json` includes, and `tofu fmt` covers `.tf`. Everything else follows `.editorconfig`. After a Biome version bump, run `yarn biome migrate --write`.
 - The Husky pre-commit hook runs `yarn lint --staged`. The `prepare-commit-msg` hook prefixes the Jira key from the branch name (project JA). On a branch without one it prints "The JIRA ticket ID not found", which is fine.
 - Commit subjects are short, imperative and sentence case, with no conventional-commit prefix.
