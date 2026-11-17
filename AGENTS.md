@@ -31,7 +31,7 @@ Source for the `joltdesign/php` Docker Hub image: the official `php` Apache imag
 - No CI runs on branches or PRs. Before committing a change to `build/`, `docker-bake.hcl` or `versions.json`, run `yarn build --print` and `yarn build --check`. For Dockerfile changes, also build at least one affected target.
 - Workflows under `.github/` must have no `jactionlint` findings (config: `.github/jactionlint.yaml`). Run `jactionlint` from the repo root after changing them.
 - Biome covers whatever `biome.json` includes, and `tofu fmt` covers `.tf`. Everything else follows `.editorconfig`. After a Biome version bump, run `yarn biome migrate --write`.
-- The Husky pre-commit hook runs `yarn lint --staged`. The `prepare-commit-msg` hook prefixes the Jira key from the branch name (project JA). On a branch without one it prints "The JIRA ticket ID not found", which is fine.
+- The Husky pre-commit hook runs `yarn lint --staged`. Start commit subjects with the Jira key from the branch name (project JA), e.g. `JA-12 Add …`. The `prepare-commit-msg` hook adds the key when it's missing, but it's only a backup: it doesn't always run, e.g. in a git worktree. On a branch without a key it prints "The JIRA ticket ID not found", which is fine.
 - Commit subjects are short, imperative and sentence case, with no conventional-commit prefix.
 - To add or remove a PHP version, edit `versions.json`. If an extension doesn't build on a new version, add an entry for it to `dependency_versions` in `docker-bake.hcl`.
 
