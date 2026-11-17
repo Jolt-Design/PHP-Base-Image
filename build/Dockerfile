@@ -35,7 +35,7 @@ RUN pie install phpredis/phpredis \
     && docker-php-ext-install -j$(nproc) mysqli gd pdo_mysql $([ "x${OPCACHE_DISABLED}" != "x1" ] && echo opcache) exif zip intl \
     && docker-php-source delete
 
-RUN a2enmod alias ext_filter headers rewrite remoteip
+RUN a2enmod alias brotli ext_filter headers rewrite remoteip
 
 COPY ./php-conf.d/ /usr/local/etc/php/conf.d
 COPY ./apache-conf.d/ /etc/apache2/conf-enabled
