@@ -10,5 +10,6 @@
 # Terraform
 *.tfstate*
 
-# Claude Code personal settings
+# Claude Code
 .claude/settings.local.json
+.claude/worktrees/
